@@ -1,0 +1,241 @@
+.stock-arrival-wrapper {
+  padding: 1rem;
+  
+}
+
+.arrival-date-list {
+  width: 50dvw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.arrival-date-card {
+  
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 0.7rem;
+  cursor: pointer;
+  border: 2px solid #ddd;
+
+}
+
+.add-date-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #361212;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.companies-wrapper {
+  padding: 1rem;
+}
+
+.stock-arrival-wrapper {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 20px;
+  position: relative;
+}
+
+.company-heading {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.toggle-buttons {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  gap: 1rem;
+}
+
+.toggle {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  background: #f0f0f0;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.toggle.active {
+  background: #301616;
+  color: white;
+}
+
+.arrival-date-list {
+  list-style: none;
+  padding: 0;
+}
+
+.arrival-date-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0f0f0;
+  margin: 1rem 0;
+  padding: 0.7rem 1rem;
+  border-radius: 15px;
+}
+
+.date-box {
+  background: #7a6e6e;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.amount {
+  flex-grow: 1;
+  margin-left: 10rem;
+  color: #555;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 1rem;
+}
+
+.status-dot.green {
+  background-color: green;
+}
+
+.delete-icon {
+  cursor: pointer;
+  color: #333;
+}
+
+/* .add-date-button {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  background: linear-gradient(to bottom, #fff, #301616);
+  color: #000;
+  border: none;
+  font-size: 2rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+} */
+
+.add-date-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.add-date-form input {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.status-dot.green {
+  background-color: green;
+}
+.status-dot.gray {
+  background-color: red;
+}
+
+/* Position add button to bottom-left */
+.add-date-button {
+  position: fixed; /* ← fixed instead of absolute */
+  bottom: 15%;     /* Distance from bottom of screen */
+  right: 10%;       /* Distance from left of screen */
+ background: linear-gradient(to bottom, #ffffff, #432323);
+  color: rgb(255, 255, 255);
+  border: none;
+   width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  font-size: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 1000;     /* Ensures it stays above other content */
+}
+
+
+/* Modal overlay background */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Centered form modal */
+.add-date-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 90%;
+  max-width: 400px;
+  z-index: 1001;
+}
+
+.add-date-form input {
+  padding: 0.8rem;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.add-date-form input:focus {
+  border-color: #301616;
+}
+
+.add-date-form button {
+  padding: 0.8rem;
+  font-size: 1rem;
+  font-weight: bold;
+  background: #301616;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.add-date-form button:hover {
+  background: #4c1c1c;
+}
+
+@media (max-width: 768px) {
+  .arrival-date-list {
+    width: 80vw;
+  }
+
+  .add-date-button {
+    left: 20rem;
+    top: 45rem;
+    bottom: 0rem;
+  }
+
+  .amount {
+    margin-left: 2rem;
+  }
+}
