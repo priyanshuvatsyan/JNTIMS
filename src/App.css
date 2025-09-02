@@ -1,0 +1,13 @@
+/* Disable selection everywhere */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Re-enable inside input fields */
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
+}
