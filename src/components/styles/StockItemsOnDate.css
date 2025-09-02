@@ -153,6 +153,7 @@ position: fixed; /* ← fixed instead of absolute */
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  width: auto ;
   margin-top: 0.5rem;
 }
 
@@ -200,4 +201,8 @@ position: fixed; /* ← fixed instead of absolute */
     padding: 10px 20px;
     font-size: 1.2rem;
   }
+  .sold {
+    flex-direction: column;
+    align-items: flex-start;
+}
 }
