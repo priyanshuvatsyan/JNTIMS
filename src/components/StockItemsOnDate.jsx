@@ -223,10 +223,3 @@ useEffect(() => {
   );
 }
 
-
-/**
- * Add new features:
-
- * 3. Price with Gst dynamic calculatio while adding product: easy Selling price calculation 
- * 4. Fix add item button on prev page
- */
