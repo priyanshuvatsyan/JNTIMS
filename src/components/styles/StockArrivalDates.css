@@ -226,16 +226,18 @@
 
 @media (max-width: 768px) {
   .arrival-date-list {
-    width: 80vw;
+    width: 90vw; /* more flexible width */
   }
 
   .add-date-button {
-    left: 20rem;
-    top: 45rem;
-    bottom: 0rem;
+    bottom: 3rem;   /* distance from bottom */
+    right: 2rem;    /* distance from right */
+    left: auto;     /* reset left */
+    top: auto;      /* reset top */
   }
 
   .amount {
-    margin-left: 2rem;
+    margin-left: 1rem; /* smaller left margin for mobile */
   }
 }
+

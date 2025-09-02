@@ -1,7 +1,10 @@
 import React from 'react'
 import './styles/Dashboard.css';
+import PaymentsCompanyList from '../components/PaymentsCompanyList';
 export default function Bills() {
   return (
-    <div className='coming-soon' >Coming-soon</div>
+    <div>
+    <PaymentsCompanyList/>
+    </div>
   )
 }

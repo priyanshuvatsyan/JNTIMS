@@ -17,6 +17,10 @@ export default function StockItemsOnDate() {
     sellingPrice: ''
   });
   const [soldUnits, setSoldUnits] = useState({});
+    const [totalBill, setTotalBill] = useState(0);
+  const [totalProfit, setTotalProfit] = useState(0);
+  const [calculatedPriceWithGst, setCalculatedPriceWithGst] = useState(0);
+
 
   const fetchItems = async () => {
     try {
@@ -34,7 +38,7 @@ export default function StockItemsOnDate() {
     if (!name || !units || !gst || !price || !sellingPrice) return alert('Fill all fields');
 
     const quantity = parseInt(units);
-    const basePrice = parseFloat(price);
+    const basePrice = parseFloat(price); 
     const gstPercent = parseFloat(gst);
     const priceWithGst = basePrice * (1 + gstPercent / 100);
     const totalCostWithGst = priceWithGst * quantity;
@@ -99,13 +103,53 @@ export default function StockItemsOnDate() {
     }
   };
 
+  //for dynamic calculation of total bill and profits
+useEffect(() => {
+  let bill = 0;
+  let profit = 0;
+
+  items.forEach(item => {
+    const soldUnits = item.sold || 0;
+    const remainingUnits = item.units - soldUnits;
+
+    // Bill is total value of all units including GST
+    bill += parseFloat(item.totalCostWithGst);
+
+    // Profit calculation (sold units only)
+  profit += (item.sellingPrice - parseFloat(item.priceWithGst)) * soldUnits;
+
+  });
+
+  setTotalBill(bill);
+  setTotalProfit(profit);
+}, [items]);
+
+  
+//for inForm TotalPrice calculation with gst
+useEffect(() => {
+   const price = parseFloat(formData.price) || 0;
+  const gst = parseFloat(formData.gst) || 0;
+
+  const priceWithGst = price * (1 + gst / 100);
+  setCalculatedPriceWithGst(priceWithGst.toFixed(2));
+}, [
+  formData.price,
+  formData.gst
+])
+
+
   useEffect(() => {
     fetchItems();
   }, [companyId, dateId]);
 
   return (
     <div className="items-wrapper">
+      <div className="header-stats">
+  <p><strong>Total Bill:</strong> ₹{totalBill.toFixed(2)}</p>
+  <p><strong>Profit till now:</strong> ₹{totalProfit.toFixed(2)}</p>
+</div>
       <h2 className="heading">Stock Items</h2>
+      
       <ul className="item-list">
         {items.map(item => (
           <li key={item.id} className="item-card">
@@ -125,7 +169,7 @@ export default function StockItemsOnDate() {
                 <p><strong>Selling Price:</strong> ₹{item.sellingPrice}</p>
                 <p><strong>GST:</strong> {item.gst}%</p>
                 <p><strong>Revenue:</strong> ₹{item.sellingPrice * (item.sold || 0)}</p>
-                <p><strong>Profit:</strong> ₹{(item.sellingPrice - item.price) * (item.sold || 0)}</p>
+                <p><strong>Profit:</strong> ₹{((item.sellingPrice - item.priceWithGst) * (item.sold || 0)).toFixed(2)}</p>
 
                 <div className="sold">
                   <input
@@ -149,11 +193,27 @@ export default function StockItemsOnDate() {
         <div className="modal-overlay">
           <div className="modal">
             <h3>Add Product</h3>
-            <input placeholder="Product Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-            <input placeholder="Units" type="number" value={formData.units} onChange={e => setFormData({ ...formData, units: e.target.value })} />
-            <input placeholder="GST %" type="number" value={formData.gst} onChange={e => setFormData({ ...formData, gst: e.target.value })} />
-            <input placeholder="Price" type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
-            <input placeholder="Selling Price" type="number" value={formData.sellingPrice} onChange={e => setFormData({ ...formData, sellingPrice: e.target.value })} />
+            <input placeholder="Product Name" 
+            value={formData.name} 
+            onChange={e => setFormData({ ...formData, name: e.target.value })} />
+
+            <input placeholder="Units" type="number" 
+            value={formData.units} 
+            onChange={e => setFormData({ ...formData, units: e.target.value })} />
+
+            <input placeholder="GST %" type="number" 
+            value={formData.gst} 
+            onChange={e => setFormData({ ...formData, gst: e.target.value })} />
+
+            <input placeholder="Price" type="number" 
+            value={formData.price} 
+            onChange={e => setFormData({ ...formData, price: e.target.value })} />
+            <p>Price with GST: ₹{calculatedPriceWithGst}</p>
+
+            <input placeholder="Selling Price" type="number" 
+            value={formData.sellingPrice} 
+            onChange={e => setFormData({ ...formData, sellingPrice: e.target.value })} />
+
             <button className="save-product" onClick={handleAddItem}>Save</button>
             <button className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
           </div>
@@ -164,4 +224,9 @@ export default function StockItemsOnDate() {
 }
 
 
-// stock sold is not working
+/**
+ * Add new features:
+
+ * 3. Price with Gst dynamic calculatio while adding product: easy Selling price calculation 
+ * 4. Fix add item button on prev page
+ */
