@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { collection,getDoc, getDocs, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useParams, Link } from 'react-router-dom';
+import {
+  collection,
+  getDoc,
+  getDocs,
+  query,
+  orderBy,
+  addDoc,
+  serverTimestamp,
+  deleteDoc,
+  doc,
+  updateDoc
+} from 'firebase/firestore';
 import { db } from '../../firebase';
 import { FaTrash } from 'react-icons/fa';
-import { deleteDoc, doc } from 'firebase/firestore';
-import { Link } from 'react-router-dom';
 
 import './styles/StockArrivalDates.css';
 
@@ -15,81 +24,118 @@ export default function StockArrival() {
   const [newDate, setNewDate] = useState('');
   const [amount, setAmount] = useState('');
   const [activeTab, setActiveTab] = useState('stock');
-  const [company, setCompany] = useState(null)
+  const [company, setCompany] = useState(null);
 
-
-
+  // 🔹 Fetch arrival dates + calculate amount from items
   const fetchArrivalDates = async () => {
     try {
       const ref = collection(db, `companies/${companyId}/arrivalDates`);
       const q = query(ref, orderBy('timestamp', 'desc'));
       const snapshot = await getDocs(q);
-      const dates = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+
+      const dates = await Promise.all(
+        snapshot.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+
+          // fetch items inside this date
+          const itemsRef = collection(db, `companies/${companyId}/arrivalDates/${docSnap.id}/items`);
+          const itemsSnap = await getDocs(itemsRef);
+
+          let totalAmount = 0;
+          itemsSnap.forEach((itemDoc) => {
+            const item = itemDoc.data();
+            totalAmount += item.priceWithGST || 0;
+          });
+
+          return {
+            id: docSnap.id,
+            ...data,
+            calculatedAmount: totalAmount, // ✅
+          };
+        })
+      );
+
       setArrivalDates(dates);
     } catch (err) {
-      console.error("Error fetching arrival dates", err);
+      console.error('Error fetching arrival dates', err);
     }
   };
 
-
+  // 🔹 Add new date
   const handleAddDate = async () => {
-    if (!newDate || !amount) return alert("Please fill all fields");
+    if (!newDate || !amount) return alert('Please fill all fields');
 
     try {
       const ref = collection(db, `companies/${companyId}/arrivalDates`);
       await addDoc(ref, {
-        date: newDate, // it's already in correct format from <input type="date">
+        date: newDate,
         amount: parseFloat(amount),
         status: 'Active',
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
       });
       setNewDate('');
       setAmount('');
       setShowForm(false);
       fetchArrivalDates();
     } catch (err) {
-      console.error("Error adding new date", err);
+      console.error('Error adding new date', err);
     }
   };
 
+  // 🔹 Delete arrival date
   const handleDelete = async (dateId) => {
-
-
     try {
       const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}`);
       await deleteDoc(ref);
-      fetchArrivalDates(); // Refresh the UI
+      fetchArrivalDates();
     } catch (err) {
-      console.error("Error deleting record", err);
-      alert("Failed to delete record");
+      console.error('Error deleting record', err);
+      alert('Failed to delete record');
     }
   };
 
-  //for fetching current acting company name on top
-  const fetchCompany = async () => {
-  try {
-    const ref = doc(db, "companies", companyId);
-    const snapshot = await getDoc(ref);
-    if (snapshot.exists()) {
-      setCompany(snapshot.data());
-    } else {
-      console.error("Company not found");
+  // 🔹 Toggle Sold / Active
+  const markAsSold = async (dateId) => {
+    try {
+      const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}`);
+      await updateDoc(ref, { status: 'Sold' });
+      fetchArrivalDates();
+    } catch (err) {
+      console.error('Error marking as sold', err);
     }
-  } catch (err) {
-    console.error("Error fetching company", err);
-  }
-};
+  };
 
+  const markAsActive = async (dateId) => {
+    try {
+      const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}`);
+      await updateDoc(ref, { status: 'Active' });
+      fetchArrivalDates();
+    } catch (err) {
+      console.error('Error marking as active', err);
+    }
+  };
+
+  // 🔹 Fetch company details
+  const fetchCompany = async () => {
+    try {
+      const ref = doc(db, 'companies', companyId);
+      const snapshot = await getDoc(ref);
+      if (snapshot.exists()) {
+        setCompany(snapshot.data());
+      } else {
+        console.error('Company not found');
+      }
+    } catch (err) {
+      console.error('Error fetching company', err);
+    }
+  };
 
   useEffect(() => {
     fetchArrivalDates();
     fetchCompany();
   }, [companyId]);
 
-  const filteredDates = arrivalDates.filter(entry => {
+  const filteredDates = arrivalDates.filter((entry) => {
     if (activeTab === 'stock') return entry.status === 'Active';
     return entry.status === 'Sold';
   });
@@ -98,8 +144,8 @@ export default function StockArrival() {
     <div className="companies-wrapper">
       <div className="stock-arrival-wrapper">
         <h2 className="company-heading">
-  {company ? company.name : "Loading..."}
-</h2>
+          {company ? company.name : 'Loading...'}
+        </h2>
 
         <div className="toggle-buttons">
           <button
@@ -117,17 +163,38 @@ export default function StockArrival() {
         </div>
 
         <ul className="arrival-date-list">
-          {filteredDates.map(date => (
+          {filteredDates.map((date) => (
             <li className="arrival-date-item" key={date.id}>
-              <Link to={`/company/${companyId}/date/${date.id}`}>
+              <Link to={`/company/${companyId}/date/${date.id}`}  className="date-link" >
                 <div className="date-box">{date.date}</div>
               </Link>
 
-              <div className="amount">₹ {date.amount || 0}</div>
-              <div className={`status-dot ${date.status === 'Active' ? 'green' : 'gray'}`}></div>
+              {/* ✅ Show calculated amount if available */}
+              <div className="amount">
+                ₹ {date.calculatedAmount || date.amount || 0}
+              </div>
 
-              <FaTrash className="delete-icon" onClick={() => handleDelete(date.id)} />
+              <div
+                className={`status-dot ${
+                  date.status === 'Active' ? 'green' : 'gray'
+                }`}
+              ></div>
 
+              {date.status === 'Active' ? (
+  <button className="action-btn sold" onClick={() => markAsSold(date.id)}>
+    Mark Sold
+  </button>
+) : (
+  <button className="action-btn restock" onClick={() => markAsActive(date.id)}>
+    Restock
+  </button>
+)}
+
+
+              <FaTrash
+                className="delete-icon"
+                onClick={() => handleDelete(date.id)}
+              />
             </li>
           ))}
         </ul>
@@ -157,9 +224,13 @@ export default function StockArrival() {
           </div>
         )}
 
-
         {activeTab === 'stock' && (
-          <button className="add-date-button bottom-left" onClick={() => setShowForm(!showForm)}>+</button>
+          <button
+            className="add-date-button bottom-left"
+            onClick={() => setShowForm(!showForm)}
+          >
+            +
+          </button>
         )}
       </div>
     </div>

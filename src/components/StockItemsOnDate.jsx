@@ -20,7 +20,9 @@ export default function StockItemsOnDate() {
     sellingPrice: ''
   });
 
-  const [soldUnits, setSoldUnits] = useState({});
+  const [soldUnits, setSoldUnits] = useState({});   // holds the "units to add" typed for each item
+  const [savingSoldId, setSavingSoldId] = useState(null); // which item's "Add" is saving (UX only)
+
   const [totalBill, setTotalBill] = useState(0);
   const [totalProfit, setTotalProfit] = useState(0);
 
@@ -29,12 +31,16 @@ export default function StockItemsOnDate() {
   const [calculatedPerUnitWithoutGst, setCalculatedPerUnitWithoutGst] = useState(0);
   const [calculatedPerUnitWithGst, setCalculatedPerUnitWithGst] = useState(0);
 
-  // Fetch all stock items from Firestore
+  // --- Helpers ---
+
+  // Round to 2 decimals but keep it as a Number (not a string)
+  const to2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+
   const fetchItems = async () => {
     try {
       const ref = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
       const snapshot = await getDocs(ref);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setItems(data);
     } catch (err) {
       console.error('Error fetching items:', err);
@@ -48,22 +54,22 @@ export default function StockItemsOnDate() {
       return alert('Fill all fields');
     }
 
-    const boxCount = parseInt(boxes);
-    const perBoxUnits = parseInt(unitsPerBox);
-    const totalUnits = boxCount * perBoxUnits;
+    const boxCount = parseInt(boxes);            // number of boxes
+    const perBoxUnits = parseInt(unitsPerBox);   // units in each box
+    const totalUnits = boxCount * perBoxUnits;   // total sellable units
 
-    const baseBoxPrice = parseFloat(boxPrice); // price per box without GST
+    const baseBoxPrice = parseFloat(boxPrice);   // price per box (w/o GST)
     const gstPercent = parseFloat(gst);
 
-    // GST calculations
+    // GST calculations are done per box (as billed)
     const gstAmountPerBox = (baseBoxPrice * gstPercent) / 100;
     const boxPriceWithGst = baseBoxPrice + gstAmountPerBox;
 
-    // Total costs
+    // Totals for the arrival line
     const totalCostWithoutGst = baseBoxPrice * boxCount;
     const totalCostWithGst = boxPriceWithGst * boxCount;
 
-    // Per unit prices
+    // Per unit cost derived from totals
     const perUnitWithoutGst = totalCostWithoutGst / totalUnits;
     const perUnitWithGst = totalCostWithGst / totalUnits;
 
@@ -76,13 +82,14 @@ export default function StockItemsOnDate() {
         units: totalUnits,
         sold: 0,
         gst: gstPercent,
-        boxPrice: baseBoxPrice,
-        boxPriceWithGst: boxPriceWithGst.toFixed(2),
-        totalCostWithoutGst: totalCostWithoutGst.toFixed(2),
-        totalCostWithGst: totalCostWithGst.toFixed(2),
-        perUnitWithoutGst: perUnitWithoutGst.toFixed(2),
-        perUnitWithGst: perUnitWithGst.toFixed(2),
-        sellingPrice: parseFloat(sellingPrice),
+        // Store numbers (rounded), not strings, to avoid math issues later
+        boxPrice: to2(baseBoxPrice),
+        boxPriceWithGst: to2(boxPriceWithGst),
+        totalCostWithoutGst: to2(totalCostWithoutGst),
+        totalCostWithGst: to2(totalCostWithGst),
+        perUnitWithoutGst: to2(perUnitWithoutGst),
+        perUnitWithGst: to2(perUnitWithGst),
+        sellingPrice: to2(parseFloat(sellingPrice)), // per-unit selling price
         timestamp: serverTimestamp()
       });
 
@@ -95,20 +102,33 @@ export default function StockItemsOnDate() {
     }
   };
 
-  // Save sold units update
-  const handleSaveSoldUnits = async (itemId, totalUnits) => {
-    const sold = parseInt(soldUnits[itemId]) || 0;
-    if (sold < 0 || sold > totalUnits) return alert('Invalid sold units');
+  // Add sold units (INCREMENTAL). We treat the input as "add X more", not "set total to X".
+  const handleSaveSoldUnits = async (itemId, totalUnits, currentSold = 0) => {
+    // value typed is the increment to add
+    const increment = parseInt(soldUnits[itemId]) || 0;
+    if (increment <= 0) return alert('Enter a positive number');
+
+    // Remaining stock available to sell
+    const remaining = totalUnits - currentSold;
+    if (increment > remaining) {
+      return alert(`You only have ${remaining} units left.`);
+    }
 
     try {
+      setSavingSoldId(itemId); // UI: show "Saving..." on the specific button
+
+      const newSold = currentSold + increment; // incremental add
       const itemRef = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemId}`);
-      await updateDoc(itemRef, { sold });
+      await updateDoc(itemRef, { sold: newSold });
+
+      // After saving, clear the input for this item only
+      setSoldUnits(prev => ({ ...prev, [itemId]: '' }));
 
       // Check if ALL items are sold -> mark arrivalDate as "Sold"
       const ref = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
       const snapshot = await getDocs(ref);
-      const allItems = snapshot.docs.map(doc => doc.data());
-      const allSold = allItems.every(item => (item.sold || 0) >= item.units);
+      const allItems = snapshot.docs.map(d => d.data());
+      const allSold = allItems.every(it => (it.sold || 0) >= it.units);
 
       if (allSold) {
         const arrivalDateRef = doc(db, `companies/${companyId}/arrivalDates/${dateId}`);
@@ -118,10 +138,11 @@ export default function StockItemsOnDate() {
       fetchItems();
     } catch (err) {
       console.error('Error updating sold units:', err);
+    } finally {
+      setSavingSoldId(null);
     }
   };
 
-  // Delete an item
   const handleDeleteItem = async (itemId) => {
     try {
       const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemId}`);
@@ -138,15 +159,18 @@ export default function StockItemsOnDate() {
     let profit = 0;
 
     items.forEach(item => {
-      const soldUnits = item.sold || 0;
-      bill += parseFloat(item.totalCostWithGst); // total bill is always with GST
+      const sold = Number(item.sold) || 0;
+      const perUnitCostWithGst = Number(item.perUnitWithGst) || 0;
+      const selling = Number(item.sellingPrice) || 0;
+      const lineTotalWithGst = Number(item.totalCostWithGst) || 0;
 
-      // Profit = (selling price per unit - purchase price per unit with GST) × sold units
-      profit += (item.sellingPrice - item.perUnitWithGst) * soldUnits;
+      bill += lineTotalWithGst; // total bill includes GST
+      // Profit on sold portion only
+      profit += (selling - perUnitCostWithGst) * sold;
     });
 
-    setTotalBill(bill);
-    setTotalProfit(profit);
+    setTotalBill(to2(bill));
+    setTotalProfit(to2(profit));
   }, [items]);
 
   // Live preview calculation inside form (helps user decide selling price)
@@ -156,14 +180,14 @@ export default function StockItemsOnDate() {
     const unitsPerBox = parseInt(formData.unitsPerBox) || 1;
 
     const boxPriceWithGst = boxPrice * (1 + gst / 100);
-    setCalculatedBoxPriceWithGst(boxPriceWithGst.toFixed(2));
+    setCalculatedBoxPriceWithGst((to2(boxPriceWithGst)).toFixed(2));
 
-    // Calculate per-unit prices in preview
+    // Calculate per-unit prices in preview (display-only)
     const perUnitWithoutGst = boxPrice / unitsPerBox;
     const perUnitWithGst = boxPriceWithGst / unitsPerBox;
 
-    setCalculatedPerUnitWithoutGst(perUnitWithoutGst.toFixed(2));
-    setCalculatedPerUnitWithGst(perUnitWithGst.toFixed(2));
+    setCalculatedPerUnitWithoutGst((to2(perUnitWithoutGst)).toFixed(2));
+    setCalculatedPerUnitWithGst((to2(perUnitWithGst)).toFixed(2));
   }, [formData.boxPrice, formData.gst, formData.unitsPerBox]);
 
   useEffect(() => {
@@ -179,45 +203,63 @@ export default function StockItemsOnDate() {
 
       <h2 className="heading">Stock Items</h2>
       <ul className="item-list">
-        {items.map(item => (
-          <li key={item.id} className="item-card">
-            <div className="item-header">
-              <button className="item-name" onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
-                {item.name}
-              </button>
-              <span onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)} className="dropdown-icon">▾</span>
-            </div>
-            {expandedItem === item.id && (
-              <div className="item-details">
-                <p><strong>Boxes:</strong> {item.boxes}</p>
-                <p><strong>Units per Box:</strong> {item.unitsPerBox}</p>
-                <p><strong>Total Units:</strong> {item.units}</p>
-                <p><strong>Sold:</strong> {item.sold || 0}</p>
-                <p><strong>Stock left:</strong> {item.units - (item.sold || 0)}</p>
-                <p><strong>Box Price w/o GST:</strong> ₹{item.boxPrice}</p>
-                <p><strong>Box Price with GST:</strong> ₹{item.boxPriceWithGst}</p>
-                <p><strong>Total Cost w/o GST:</strong> ₹{item.totalCostWithoutGst}</p>
-                <p><strong>Total Cost with GST:</strong> ₹{item.totalCostWithGst}</p>
-                <p><strong>Per Unit w/o GST:</strong> ₹{item.perUnitWithoutGst}</p>
-                <p><strong>Per Unit with GST:</strong> ₹{item.perUnitWithGst}</p>
-                <p><strong>Selling Price per Unit:</strong> ₹{item.sellingPrice}</p>
-                <p><strong>Revenue:</strong> ₹{(item.sellingPrice * (item.sold || 0)).toFixed(2)}</p>
-                <p><strong>Profit:</strong> ₹{((item.sellingPrice - item.perUnitWithGst) * (item.sold || 0)).toFixed(2)}</p>
+        {items.map(item => {
+          const currentSold = Number(item.sold) || 0;
+          const remaining = Number(item.units) - currentSold;
 
-                <div className="sold">
-                  <input
-                    type="number"
-                    placeholder="Units Sold"
-                    value={soldUnits[item.id] || ''}
-                    onChange={(e) => setSoldUnits({ ...soldUnits, [item.id]: e.target.value })}
-                  />
-                  <button onClick={() => handleSaveSoldUnits(item.id, item.units)}>Save</button>
-                </div>
-                <button className="delete-btn" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+          return (
+            <li key={item.id} className="item-card">
+              <div className="item-header">
+                <button className="item-name" onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
+                  {item.name}
+                </button>
+                <span onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)} className="dropdown-icon">▾</span>
               </div>
-            )}
-          </li>
-        ))}
+
+              {expandedItem === item.id && (
+                <div className="item-details">
+                  <p><strong>Boxes:</strong> {item.boxes}</p>
+                  <p><strong>Units per Box:</strong> {item.unitsPerBox}</p>
+                  <p><strong>Total Units:</strong> {item.units}</p>
+                  <p><strong>Sold:</strong> {currentSold}</p>
+                  <p><strong>Stock left:</strong> {remaining}</p>
+
+                  <p><strong>Box Price w/o GST:</strong> ₹{Number(item.boxPrice).toFixed(2)}</p>
+                  <p><strong>Box Price with GST:</strong> ₹{Number(item.boxPriceWithGst).toFixed(2)}</p>
+                  <p><strong>Total Cost w/o GST:</strong> ₹{Number(item.totalCostWithoutGst).toFixed(2)}</p>
+                  <p><strong>Total Cost with GST:</strong> ₹{Number(item.totalCostWithGst).toFixed(2)}</p>
+
+                  <p><strong>Per Unit w/o GST:</strong> ₹{Number(item.perUnitWithoutGst).toFixed(2)}</p>
+                  <p><strong>Per Unit with GST:</strong> ₹{Number(item.perUnitWithGst).toFixed(2)}</p>
+
+                  <p><strong>Selling Price per Unit:</strong> ₹{Number(item.sellingPrice).toFixed(2)}</p>
+                  <p><strong>Revenue:</strong> ₹{(Number(item.sellingPrice) * currentSold).toFixed(2)}</p>
+                  <p><strong>Profit:</strong> ₹{((Number(item.sellingPrice) - Number(item.perUnitWithGst)) * currentSold).toFixed(2)}</p>
+
+                  <div className="sold">
+                    {/* Treat this input as "Add X more units sold" */}
+                    <input
+                      type="number"
+                      min="1"
+                      max={remaining}
+                      placeholder={`Add units (max ${remaining})`}
+                      value={soldUnits[item.id] ?? ''}
+                      onChange={(e) => setSoldUnits({ ...soldUnits, [item.id]: e.target.value })}
+                    />
+                    <button
+                      onClick={() => handleSaveSoldUnits(item.id, Number(item.units), currentSold)}
+                      disabled={savingSoldId === item.id || remaining <= 0}
+                    >
+                      {savingSoldId === item.id ? 'Saving…' : 'Sold'}
+                    </button>
+                  </div>
+
+                  <button className="delete-btn" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       {/* Add Product Modal */}
@@ -227,39 +269,50 @@ export default function StockItemsOnDate() {
           <div className="modal">
             <h3>Add Product</h3>
 
-            <input placeholder="Product Name"
+            <input
+              placeholder="Product Name"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
 
-            <input placeholder="Boxes" type="number"
+            <input
+              placeholder="Boxes"
+              type="number"
               value={formData.boxes}
               onChange={e => setFormData({ ...formData, boxes: e.target.value })}
             />
 
-            <input placeholder="Units per Box" type="number"
+            <input
+              placeholder="Units per Box"
+              type="number"
               value={formData.unitsPerBox}
               onChange={e => setFormData({ ...formData, unitsPerBox: e.target.value })}
             />
 
-            <input placeholder="Box Price (without GST)" type="number"
+            <input
+              placeholder="Box Price (without GST)"
+              type="number"
               value={formData.boxPrice}
               onChange={e => setFormData({ ...formData, boxPrice: e.target.value })}
             />
 
-            <input placeholder="GST %" type="number"
+            <input
+              placeholder="GST %"
+              type="number"
               value={formData.gst}
               onChange={e => setFormData({ ...formData, gst: e.target.value })}
             />
 
-            {/* Live Preview Section */}
+            {/* Live Preview Section (display only) */}
             <div className="preview">
               <p>📦 Box Price with GST: ₹{calculatedBoxPriceWithGst}</p>
               <p>🔹 Per Unit w/o GST: ₹{calculatedPerUnitWithoutGst}</p>
               <p>🔹 Per Unit with GST: ₹{calculatedPerUnitWithGst}</p>
             </div>
 
-            <input placeholder="Selling Price per Unit" type="number"
+            <input
+              placeholder="Selling Price per Unit"
+              type="number"
               value={formData.sellingPrice}
               onChange={e => setFormData({ ...formData, sellingPrice: e.target.value })}
             />
@@ -272,3 +325,11 @@ export default function StockItemsOnDate() {
     </div>
   );
 }
+
+
+
+
+/**
+ * Add Global profit variable 
+ * add dates on every sold to calculate profit and revenue on that month
+ */

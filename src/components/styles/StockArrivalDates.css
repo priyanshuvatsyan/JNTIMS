@@ -91,6 +91,10 @@
   border-radius: 20px;
   font-weight: bold;
 }
+.date-link {
+  text-decoration: none;
+  color: inherit;
+}
 
 .amount {
   flex-grow: 1;
@@ -224,6 +228,38 @@
   background: #4c1c1c;
 }
 
+/* Mark Sold / Restock buttons */
+.action-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 0.5rem;
+}
+
+/* Green for restock */
+.action-btn.restock {
+  color: #2e7d32; /* green */
+
+}
+
+.action-btn.restock:hover {
+  background: #dfdfdf;
+}
+
+/* Red for mark sold */
+.action-btn.sold {
+  color: #c62828; /* red */
+
+}
+
+.action-btn.sold:hover {
+  background: #dfdfdf;
+}
+
+
 @media (max-width: 768px) {
   .arrival-date-list {
     width: 90vw; /* more flexible width */
@@ -237,7 +273,26 @@
   }
 
   .amount {
-    margin-left: 1rem; /* smaller left margin for mobile */
+    margin-left: 1rem; 
+    font-size: .8rem;
   }
+  .arrival-date-item {
+  font-size: 1rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0f0f0;
+  margin: 1rem 0;
+  padding: 0.7rem 1rem;
+  border-radius: 15px;
+}
+
+.date-box {
+font-size: .9rem;
+
+}
+
+
 }
 
