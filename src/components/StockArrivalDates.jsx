@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   deleteDoc,
   doc,
+  increment,
   updateDoc
 } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -62,25 +63,36 @@ export default function StockArrival() {
   };
 
   // 🔹 Add new date
-  const handleAddDate = async () => {
-    if (!newDate || !amount) return alert('Please fill all fields');
+const handleAddDate = async () => {
+  if (!newDate || !amount) return alert('Please fill all fields');
 
-    try {
-      const ref = collection(db, `companies/${companyId}/arrivalDates`);
-      await addDoc(ref, {
-        date: newDate,
-        amount: parseFloat(amount),
-        status: 'Active',
-        timestamp: serverTimestamp(),
-      });
-      setNewDate('');
-      setAmount('');
-      setShowForm(false);
-      fetchArrivalDates();
-    } catch (err) {
-      console.error('Error adding new date', err);
-    }
-  };
+  try {
+    // Add the arrival
+    const ref = collection(db, `companies/${companyId}/arrivalDates`);
+    const amt = parseFloat(amount) || 0;
+
+    await addDoc(ref, {
+      date: newDate,
+      amount: amt,
+      status: 'Active',
+      timestamp: serverTimestamp(),
+    });
+
+    // Increment the company’s running payable balance
+    const companyRef = doc(db, 'companies', companyId);
+    await updateDoc(companyRef, {
+      totalPayable: increment(amt),  // Increment by the amount
+    });
+
+    setNewDate('');
+    setAmount('');
+    setShowForm(false);
+    fetchArrivalDates();
+  } catch (err) {
+    console.error('Error adding new date', err);
+  }
+};
+
 
   // 🔹 Delete arrival date
   const handleDelete = async (dateId) => {
@@ -165,7 +177,7 @@ export default function StockArrival() {
         <ul className="arrival-date-list">
           {filteredDates.map((date) => (
             <li className="arrival-date-item" key={date.id}>
-              <Link to={`/company/${companyId}/date/${date.id}`}  className="date-link" >
+              <Link to={`/company/${companyId}/date/${date.id}`} className="date-link" >
                 <div className="date-box">{date.date}</div>
               </Link>
 
@@ -175,20 +187,19 @@ export default function StockArrival() {
               </div>
 
               <div
-                className={`status-dot ${
-                  date.status === 'Active' ? 'green' : 'gray'
-                }`}
+                className={`status-dot ${date.status === 'Active' ? 'green' : 'gray'
+                  }`}
               ></div>
 
               {date.status === 'Active' ? (
-  <button className="action-btn sold" onClick={() => markAsSold(date.id)}>
-    Mark Sold
-  </button>
-) : (
-  <button className="action-btn restock" onClick={() => markAsActive(date.id)}>
-    Restock
-  </button>
-)}
+                <button className="action-btn sold" onClick={() => markAsSold(date.id)}>
+                  Mark Sold
+                </button>
+              ) : (
+                <button className="action-btn restock" onClick={() => markAsActive(date.id)}>
+                  Restock
+                </button>
+              )}
 
 
               <FaTrash
@@ -236,3 +247,6 @@ export default function StockArrival() {
     </div>
   );
 }
+
+
+//set global payments increment when adding new stock arrival with amount 

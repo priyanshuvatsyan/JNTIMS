@@ -121,6 +121,29 @@ export default function StockItemsOnDate() {
       const itemRef = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemId}`);
       await updateDoc(itemRef, { sold: newSold });
 
+       // Fetch latest item details for global sales record
+    const soldItem = items.find(it => it.id === itemId);
+    if (soldItem) {
+      const perUnitCost = Number(soldItem.perUnitWithGst) || 0;
+      const selling = Number(soldItem.sellingPrice) || 0;
+
+      const revenue = selling * increment;
+      const profit = (selling - perUnitCost) * increment;
+
+      // Add a new sales record (GLOBAL)
+      await addDoc(collection(db, "sales"), {
+        companyId,
+        itemId,
+        itemName: soldItem.name,
+        unitsSold: increment,
+        revenue: revenue,
+        profit: profit,
+        date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+        timestamp: serverTimestamp(),
+      });
+    }
+
+
       // After saving, clear the input for this item only
       setSoldUnits(prev => ({ ...prev, [itemId]: '' }));
 
