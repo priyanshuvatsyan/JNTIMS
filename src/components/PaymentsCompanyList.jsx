@@ -1,11 +1,12 @@
-// src/pages/PaymentsCompanyList.jsx
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { Link } from 'react-router-dom';
-import { db } from '../../firebase'; // Adjust path if needed
+import { Link, useLocation } from 'react-router-dom';
+import { db } from '../../firebase';
+import './styles/PaymentsCompanyList.css'; 
 
 export default function PaymentsCompanyList() {
   const [companies, setCompanies] = useState([]);
+  const location = useLocation();
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -23,12 +24,12 @@ export default function PaymentsCompanyList() {
   }, []);
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h2>Choose Company for Payments</h2>
-      <ul>
+    <div className="company-list-wrapper">
+      <h2 className="company-list-heading">Choose Company for Payments</h2>
+      <ul className="company-list">
         {companies.map(company => (
-          <li key={company.id}>
-            <Link to={`/payments/${company.id}`} style={{ fontSize: '1.2rem' }}>
+          <li key={company.id} className="company-card">
+            <Link to={`${company.id}`} className="company-link">
               {company.name || 'Unnamed Company'}
             </Link>
           </li>
