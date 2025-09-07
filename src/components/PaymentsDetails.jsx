@@ -93,12 +93,26 @@ export default function PaymentsDetails() {
   };
 
   // Manual amount addition
-  const handleManualAdd = () => {
-    const amt = parseFloat(manualAdd);
-    if (!amt) return alert('Enter a valid amount');
-    setTotalStockAmount(prev => prev + amt);
+// Manual amount addition (persist to Firestore)
+const handleManualAdd = async () => {
+  const amt = parseFloat(manualAdd);
+  if (!amt) return alert('Enter a valid amount');
+
+  try {
+    const ref = collection(db, `companies/${companyId}/arrivalDates`);
+    await addDoc(ref, {
+      amount: amt,
+      manual: true, // optional flag to identify manual entry
+      timestamp: serverTimestamp()
+    });
+
     setManualAdd('');
-  };
+    await fetchArrivalDates(); // refresh UI with updated DB data
+  } catch (err) {
+    console.error("Error adding manual amount:", err);
+  }
+};
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -117,8 +131,7 @@ return (
       <h2 className="payments-heading">Payments for Company</h2>
 
       <div className="summary-card">
-        <p><strong>Total Stock Amount:</strong> ₹{totalStockAmount}</p>
-        <p><strong>Total Paid:</strong> ₹{totalPaidAmount}</p>
+       
         <p>
           <strong>Remaining Balance:</strong> ₹{Math.max(remainingBalance, 0)}
           {remainingBalance <= 0 && <span className="paid-status">(Fully Paid)</span>}
