@@ -24,42 +24,58 @@ export default function PaymentsDetails() {
   const [amountPaid, setAmountPaid] = useState('');
   const [remainingBalance, setRemainingBalance] = useState(0);
   const [totalStockAmount, setTotalStockAmount] = useState(0);
-  const [cumulativePaid, setCumulativePaid] = useState(0); // permanent total
+  const [cumulativePaid, setCumulativePaid] = useState(0);
   const [manualAdd, setManualAdd] = useState('');
   const [showPaymentsDropdown, setShowPaymentsDropdown] = useState(true);
 
-  // 🔹 Fetch company totals (including cumulativePaid from company doc)
+  const [loading, setLoading] = useState(false); // 🔹 global loading
+
+  // Fetch company totals
   const fetchCompanyData = async () => {
-    const companyRef = doc(db, 'companies', companyId);
-    const snapshot = await getDoc(companyRef);
-    if (snapshot.exists()) {
-      const data = snapshot.data();
-      setCumulativePaid(data.cumulativePaid || 0);
+    setLoading(true);
+    try {
+      const companyRef = doc(db, 'companies', companyId);
+      const snapshot = await getDoc(companyRef);
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setCumulativePaid(data.cumulativePaid || 0);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   // Fetch stock arrival dates
   const fetchArrivalDates = async () => {
-    const ref = collection(db, `companies/${companyId}/arrivalDates`);
-    const q = query(ref, orderBy('timestamp', 'desc'));
-    const snapshot = await getDocs(q);
-    const dates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setArrivalDates(dates);
+    setLoading(true);
+    try {
+      const ref = collection(db, `companies/${companyId}/arrivalDates`);
+      const q = query(ref, orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+      const dates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setArrivalDates(dates);
 
-    const total = dates.reduce((sum, item) => sum + (item.amount || 0), 0);
-    setTotalStockAmount(total);
+      const total = dates.reduce((sum, item) => sum + (item.amount || 0), 0);
+      setTotalStockAmount(total);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Fetch payments history (UI only)
+  // Fetch payments
   const fetchPayments = async () => {
-    const ref = collection(db, `companies/${companyId}/payments`);
-    const q = query(ref, orderBy('timestamp', 'desc'));
-    const snapshot = await getDocs(q);
-    const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setPayments(records);
+    setLoading(true);
+    try {
+      const ref = collection(db, `companies/${companyId}/payments`);
+      const q = query(ref, orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+      const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPayments(records);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Calculate remaining balance
   useEffect(() => {
     setRemainingBalance(totalStockAmount - cumulativePaid);
   }, [totalStockAmount, cumulativePaid]);
@@ -70,44 +86,48 @@ export default function PaymentsDetails() {
     if (!checkNumber || !amt) return alert('Fill all fields');
     if (amt > remainingBalance) return alert('Payment exceeds remaining balance');
 
-    const ref = collection(db, `companies/${companyId}/payments`);
-    await addDoc(ref, {
-      checkNumber,
-      amountPaid: amt,
-      timestamp: serverTimestamp()
-    });
-
-    // 🔹 Update cumulativePaid in company doc
-    const companyRef = doc(db, 'companies', companyId);
-    await updateDoc(companyRef, { cumulativePaid: cumulativePaid + amt });
-    setCumulativePaid(prev => prev + amt);
-
-    setCheckNumber('');
-    setAmountPaid('');
-    await fetchPayments();
-  };
-
-  // Delete a payment → remove only from history
-  const handleDeletePayment = async (paymentId) => {
+    setLoading(true);
     try {
-      const paymentRef = doc(db, `companies/${companyId}/payments`, paymentId);
-      await deleteDoc(paymentRef);
+      const ref = collection(db, `companies/${companyId}/payments`);
+      await addDoc(ref, {
+        checkNumber,
+        amountPaid: amt,
+        timestamp: serverTimestamp()
+      });
 
-      setPayments(prev => prev.filter(p => p.id !== paymentId));
-      // ❌ Do NOT touch cumulativePaid → keeps balance intact
-    } catch (err) {
-      console.error('Error deleting payment', err);
+      const companyRef = doc(db, 'companies', companyId);
+      await updateDoc(companyRef, { cumulativePaid: cumulativePaid + amt });
+      setCumulativePaid(prev => prev + amt);
+
+      setCheckNumber('');
+      setAmountPaid('');
+      await fetchPayments();
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Restore a payment → subtract from cumulativePaid + delete from history
-  const handleRestorePayment = async (paymentId, amount) => {
+  // Delete payment
+  const handleDeletePayment = async (paymentId) => {
+    setLoading(true);
     try {
-      // Delete from history
+      const paymentRef = doc(db, `companies/${companyId}/payments`, paymentId);
+      await deleteDoc(paymentRef);
+      setPayments(prev => prev.filter(p => p.id !== paymentId));
+    } catch (err) {
+      console.error('Error deleting payment', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Restore payment
+  const handleRestorePayment = async (paymentId, amount) => {
+    setLoading(true);
+    try {
       const paymentRef = doc(db, `companies/${companyId}/payments`, paymentId);
       await deleteDoc(paymentRef);
 
-      // Deduct from totals
       const companyRef = doc(db, 'companies', companyId);
       await updateDoc(companyRef, { cumulativePaid: cumulativePaid - amount });
       setCumulativePaid(prev => prev - amount);
@@ -116,14 +136,17 @@ export default function PaymentsDetails() {
       alert(`Payment of ₹${amount} restored. You can now re-add the correct amount.`);
     } catch (err) {
       console.error('Error restoring payment', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Manual amount addition
+  // Manual add
   const handleManualAdd = async () => {
     const amt = parseFloat(manualAdd);
     if (!amt) return alert('Enter a valid amount');
 
+    setLoading(true);
     try {
       const ref = collection(db, `companies/${companyId}/arrivalDates`);
       await addDoc(ref, {
@@ -136,24 +159,36 @@ export default function PaymentsDetails() {
       await fetchArrivalDates();
     } catch (err) {
       console.error("Error adding manual amount:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     const loadData = async () => {
-      await fetchCompanyData();
-      await fetchArrivalDates();
-      await fetchPayments();
+      setLoading(true);
+      try {
+        await fetchCompanyData();
+        await fetchArrivalDates();
+        await fetchPayments();
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, [companyId]);
 
   return (
     <div className="payments-wrapper">
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loader">Loading...</div>
+        </div>
+      )}
+
       <h2 className="payments-heading">Payments for Company</h2>
 
       <div className="summary-card">
-       
         <p>
           <strong>Remaining Balance:</strong> ₹{Math.max(remainingBalance, 0)}
           {remainingBalance <= 0 && <span className="paid-status">(Fully Paid)</span>}
@@ -175,7 +210,7 @@ export default function PaymentsDetails() {
           onChange={e => setAmountPaid(e.target.value)}
           placeholder="Amount Paid"
         />
-        <button onClick={handleAddPayment}>Save Payment</button>
+        <button onClick={handleAddPayment} disabled={loading}>Save Payment</button>
       </div>
 
       {/* Manual amount addition */}
@@ -186,10 +221,10 @@ export default function PaymentsDetails() {
           value={manualAdd}
           onChange={e => setManualAdd(e.target.value)}
         />
-        <button onClick={handleManualAdd}>Add Amount</button>
+        <button onClick={handleManualAdd} disabled={loading}>Add Amount</button>
       </div>
 
-      {/* Dropdown menu for payments */}
+      {/* Dropdown menu */}
       <div className="previous-payments">
         <button
           className="toggle-btn"
@@ -204,8 +239,8 @@ export default function PaymentsDetails() {
               <li key={p.id} className="payment-card">
                 <span>₹{p.amountPaid} — Check: {p.checkNumber}</span>
                 <div className="payment-actions">
-                  <button className="delete-btn" onClick={() => handleDeletePayment(p.id)}>Delete</button>
-                  <button className="restore-btn" onClick={() => handleRestorePayment(p.id, p.amountPaid)}>Restore</button>
+                  <button className="delete-btn" onClick={() => handleDeletePayment(p.id)} disabled={loading}>Delete</button>
+                  <button className="restore-btn" onClick={() => handleRestorePayment(p.id, p.amountPaid)} disabled={loading}>Restore</button>
                 </div>
               </li>
             ))}

@@ -177,5 +177,71 @@ background: #432323;
   }
 }
 
+/* Loader overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.85); /* more opaque on small screens */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Spinner */
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #ccc;
+  border-top: 4px solid #007bff; /* blue accent */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Spin animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- Mobile-friendly adjustments --- */
+@media (max-width: 600px) {
+  .payments-wrapper {
+    padding: 10px;
+  }
+
+  .new-payment-card,
+  .manual-add,
+  .previous-payments {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  input, button {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .payment-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .payment-actions {
+    margin-top: 5px;
+    display: flex;
+    gap: 5px;
+  }
+
+  .loader {
+    width: 30px;
+    height: 30px;
+    border-width: 3px;
+  }
+}
+
 
 /* extra right space */
