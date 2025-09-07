@@ -153,8 +153,7 @@ export default function PaymentsDetails() {
       <h2 className="payments-heading">Payments for Company</h2>
 
       <div className="summary-card">
-        <p><strong>Total Stock Amount:</strong> ₹{totalStockAmount}</p>
-        <p><strong>Total Paid:</strong> ₹{cumulativePaid}</p>
+       
         <p>
           <strong>Remaining Balance:</strong> ₹{Math.max(remainingBalance, 0)}
           {remainingBalance <= 0 && <span className="paid-status">(Fully Paid)</span>}
