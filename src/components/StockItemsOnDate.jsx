@@ -356,3 +356,7 @@ export default function StockItemsOnDate() {
  * Add Global profit variable 
  * add dates on every sold to calculate profit and revenue on that month
  */
+
+
+
+

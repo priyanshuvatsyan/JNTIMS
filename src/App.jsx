@@ -6,6 +6,7 @@ import StockArrival from './components/StockArrivalDates';
 import StockItemsOnDate from './components/StockItemsOnDate';
 import Dashboard from './pages/Dashboard';
 import Bills from './pages/Bills';
+import Sold from './pages/Sold';
 import PaymentsDetails from './components/PaymentsDetails'; // Component showing details of a company
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route path=":companyId" element={<PaymentsDetails />} />
         </Route>
       </Route>
+      <Route path="/sold" element={<Sold />} />
     </Routes>
   );
 }

@@ -10,6 +10,7 @@ export default function Nav() {
       </div>
       <ul className="nav-links">
         <li><Link to="/">Home</Link></li>
+        <li><Link to="/sold">Sold</Link></li>
         <li><Link to="/dashboard">Dashboard</Link></li>
         <li><Link to="/bills">Bills</Link></li>
       </ul>

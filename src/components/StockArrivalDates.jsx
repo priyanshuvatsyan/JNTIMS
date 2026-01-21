@@ -97,6 +97,15 @@ const handleAddDate = async () => {
   // 🔹 Delete arrival date
   const handleDelete = async (dateId) => {
     try {
+      // First, delete all stockItems under this date
+      const itemsRef = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
+      const itemsSnapshot = await getDocs(itemsRef);
+      const deleteItemsPromises = itemsSnapshot.docs.map(async (itemDoc) => {
+        await deleteDoc(itemDoc.ref);
+      });
+      await Promise.all(deleteItemsPromises);
+
+      // Then delete the date document
       const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}`);
       await deleteDoc(ref);
       fetchArrivalDates();

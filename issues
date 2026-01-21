@@ -1,0 +1,6 @@
+1. stock amount in add stock page and total bill (calculated while adding the stock items) are 2 saperate   
+    variable which can cause issues
+
+2. Data is not being deleted from DB 
+
+3. Sales are not visible 

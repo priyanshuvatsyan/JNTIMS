@@ -16,8 +16,9 @@ import {
 import { db } from '../../firebase';
 import './styles/PaymentsDetails.css';
 
-export default function PaymentsDetails() {
-  const { companyId } = useParams();
+export default function PaymentsDetails({ companyId: propCompanyId }) {
+  const params = useParams();
+  const companyId = propCompanyId || params.companyId;
   const [arrivalDates, setArrivalDates] = useState([]);
   const [payments, setPayments] = useState([]);
   const [checkNumber, setCheckNumber] = useState('');

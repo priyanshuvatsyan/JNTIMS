@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { db } from '../../firebase';
 import './styles/PaymentsCompanyList.css'; 
 
-export default function PaymentsCompanyList() {
+export default function PaymentsCompanyList({ onSelectCompany }) {
   const [companies, setCompanies] = useState([]);
   const location = useLocation();
 
@@ -28,10 +28,11 @@ export default function PaymentsCompanyList() {
       <h2 className="company-list-heading">Choose Company for Payments</h2>
       <ul className="company-list">
         {companies.map(company => (
-          <li key={company.id} className="company-card">
-            <Link to={`${company.id}`} className="company-link">
+          <li key={company.id} className="company-card" onClick={() => onSelectCompany && onSelectCompany(company.id)}>
+            <span className="company-link">
               {company.name || 'Unnamed Company'}
-            </Link>
+              
+            </span>
           </li>
         ))}
       </ul>
