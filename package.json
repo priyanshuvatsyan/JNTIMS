@@ -14,10 +14,12 @@
     "@fortawesome/react-fontawesome": "^3.1.1",
     "chromedriver": "^143.0.1",
     "firebase": "^11.8.1",
+    "puppeteer": "^24.36.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.2",
+    "recharts": "^3.7.0",
     "selenium-webdriver": "^4.39.0"
   },
   "devDependencies": {

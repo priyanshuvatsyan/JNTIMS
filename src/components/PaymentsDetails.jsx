@@ -39,7 +39,7 @@ export default function PaymentsDetails({ companyId: propCompanyId }) {
       const snapshot = await getDoc(companyRef);
       if (snapshot.exists()) {
         const data = snapshot.data();
-        setCumulativePaid(data.cumulativePaid || 0);
+        setCumulativePaid(data.cumulativePaid || 0); //what about needed to be paid to the company (coming from DB)
       }
     } finally {
       setLoading(false);
