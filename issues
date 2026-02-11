@@ -1,0 +1,16 @@
+1. stock amount in add stock page and total bill (calculated while adding the stock items) are 2 saperate   
+    variable which can cause issues
+
+2. Data is not being deleted from DB 
+
+3. Sales are not visible 
+
+4. figure out how payments are baing made, stored and calculated 
+
+5. figure out how Revenue and profits are baing made, stored and calculated 
+
+6. * Redesign the entire DB
+
+7.  (1) Inconsistency in amount and totalpayable in DB (both are doing the same task)
+
+8. (7)On site load add amounts are being calculated to comulativePaid(PaymentDetails.jsx)   

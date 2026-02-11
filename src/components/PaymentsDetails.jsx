@@ -16,8 +16,9 @@ import {
 import { db } from '../../firebase';
 import './styles/PaymentsDetails.css';
 
-export default function PaymentsDetails() {
-  const { companyId } = useParams();
+export default function PaymentsDetails({ companyId: propCompanyId }) {
+  const params = useParams();
+  const companyId = propCompanyId || params.companyId;
   const [arrivalDates, setArrivalDates] = useState([]);
   const [payments, setPayments] = useState([]);
   const [checkNumber, setCheckNumber] = useState('');
@@ -38,7 +39,7 @@ export default function PaymentsDetails() {
       const snapshot = await getDoc(companyRef);
       if (snapshot.exists()) {
         const data = snapshot.data();
-        setCumulativePaid(data.cumulativePaid || 0);
+        setCumulativePaid(data.cumulativePaid || 0); //what about needed to be paid to the company (coming from DB)
       }
     } finally {
       setLoading(false);

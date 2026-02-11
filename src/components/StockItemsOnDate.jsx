@@ -1,9 +1,61 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import './styles/StockItemsOnDate.css';
 
+// ===== HELPER FUNCTIONS =====
+const to2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+
+const INITIAL_FORM_STATE = {
+  name: '',
+  boxes: '',
+  unitsPerBox: '',
+  gst: '',
+  boxPrice: '',
+  sellingPrice: ''
+};
+
+const INITIAL_PREVIEW_STATE = {
+  boxPriceWithGst: 0,
+  perUnitWithoutGst: 0,
+  perUnitWithGst: 0
+};
+
+// ===== CALCULATION FUNCTIONS =====
+const calculateBoxPricing = (boxPrice, gst) => {
+  const basePrice = parseFloat(boxPrice) || 0;
+  const gstPercent = parseFloat(gst) || 0;
+  const gstAmount = (basePrice * gstPercent) / 100;
+  return to2(basePrice + gstAmount);
+};
+
+const calculatePerUnitPrices = (boxPrice, boxPriceWithGst, unitsPerBox) => {
+  const units = parseInt(unitsPerBox) || 1;
+  return {
+    withoutGst: to2(boxPrice / units),
+    withGst: to2(boxPriceWithGst / units)
+  };
+};
+
+const calculateTotals = (items) => {
+  let bill = 0;
+  let profit = 0;
+
+  items.forEach(item => {
+    const sold = Number(item.sold) || 0;
+    const perUnitCostWithGst = Number(item.perUnitWithGst) || 0;
+    const selling = Number(item.sellingPrice) || 0;
+    const lineTotalWithGst = Number(item.totalCostWithGst) || 0;
+
+    bill += lineTotalWithGst;
+    profit += (selling - perUnitCostWithGst) * sold;
+  });
+
+  return { bill: to2(bill), profit: to2(profit) };
+};
+
+// ===== MAIN COMPONENT =====
 export default function StockItemsOnDate() {
   const { companyId, dateId } = useParams();
   const [items, setItems] = useState([]);
@@ -11,32 +63,20 @@ export default function StockItemsOnDate() {
   const [expandedItem, setExpandedItem] = useState(null);
 
   // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    boxes: '',
-    unitsPerBox: '',
-    gst: '',
-    boxPrice: '',
-    sellingPrice: ''
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [preview, setPreview] = useState(INITIAL_PREVIEW_STATE);
 
-  const [soldUnits, setSoldUnits] = useState({});   // holds the "units to add" typed for each item
-  const [savingSoldId, setSavingSoldId] = useState(null); // which item's "Add" is saving (UX only)
+  // UI state
+  const [soldUnits, setSoldUnits] = useState({});
+  const [savingSoldId, setSavingSoldId] = useState(null);
 
+  // Summary state
   const [totalBill, setTotalBill] = useState(0);
   const [totalProfit, setTotalProfit] = useState(0);
 
-  // Live-calculated values in the form (preview before saving)
-  const [calculatedBoxPriceWithGst, setCalculatedBoxPriceWithGst] = useState(0);
-  const [calculatedPerUnitWithoutGst, setCalculatedPerUnitWithoutGst] = useState(0);
-  const [calculatedPerUnitWithGst, setCalculatedPerUnitWithGst] = useState(0);
 
-  // --- Helpers ---
-
-  // Round to 2 decimals but keep it as a Number (not a string)
-  const to2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
-
-  const fetchItems = async () => {
+  // ===== FIREBASE OPERATIONS =====
+  const fetchItems = useCallback(async () => {
     try {
       const ref = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
       const snapshot = await getDocs(ref);
@@ -45,7 +85,7 @@ export default function StockItemsOnDate() {
     } catch (err) {
       console.error('Error fetching items:', err);
     }
-  };
+  }, [companyId, dateId]);
 
   // Add a new stock item
   const handleAddItem = async () => {
@@ -54,22 +94,18 @@ export default function StockItemsOnDate() {
       return alert('Fill all fields');
     }
 
-    const boxCount = parseInt(boxes);            // number of boxes
-    const perBoxUnits = parseInt(unitsPerBox);   // units in each box
-    const totalUnits = boxCount * perBoxUnits;   // total sellable units
+    const boxCount = parseInt(boxes);
+    const perBoxUnits = parseInt(unitsPerBox);
+    const totalUnits = boxCount * perBoxUnits;
 
-    const baseBoxPrice = parseFloat(boxPrice);   // price per box (w/o GST)
+    const baseBoxPrice = parseFloat(boxPrice);
     const gstPercent = parseFloat(gst);
-
-    // GST calculations are done per box (as billed)
     const gstAmountPerBox = (baseBoxPrice * gstPercent) / 100;
     const boxPriceWithGst = baseBoxPrice + gstAmountPerBox;
 
-    // Totals for the arrival line
     const totalCostWithoutGst = baseBoxPrice * boxCount;
     const totalCostWithGst = boxPriceWithGst * boxCount;
 
-    // Per unit cost derived from totals
     const perUnitWithoutGst = totalCostWithoutGst / totalUnits;
     const perUnitWithGst = totalCostWithGst / totalUnits;
 
@@ -82,72 +118,63 @@ export default function StockItemsOnDate() {
         units: totalUnits,
         sold: 0,
         gst: gstPercent,
-        // Store numbers (rounded), not strings, to avoid math issues later
         boxPrice: to2(baseBoxPrice),
         boxPriceWithGst: to2(boxPriceWithGst),
         totalCostWithoutGst: to2(totalCostWithoutGst),
         totalCostWithGst: to2(totalCostWithGst),
         perUnitWithoutGst: to2(perUnitWithoutGst),
         perUnitWithGst: to2(perUnitWithGst),
-        sellingPrice: to2(parseFloat(sellingPrice)), // per-unit selling price
+        sellingPrice: to2(parseFloat(sellingPrice)),
         timestamp: serverTimestamp()
       });
 
-      // Reset form after saving
-      setFormData({ name: '', boxes: '', unitsPerBox: '', gst: '', boxPrice: '', sellingPrice: '' });
+      setFormData(INITIAL_FORM_STATE);
+      setPreview(INITIAL_PREVIEW_STATE);
       setShowModal(false);
-      fetchItems();
+      await fetchItems();
     } catch (err) {
       console.error('Error adding item:', err);
     }
   };
 
-  // Add sold units (INCREMENTAL). We treat the input as "add X more", not "set total to X".
+  // Add sold units (incremental)
   const handleSaveSoldUnits = async (itemId, totalUnits, currentSold = 0) => {
-    // value typed is the increment to add
     const increment = parseInt(soldUnits[itemId]) || 0;
     if (increment <= 0) return alert('Enter a positive number');
 
-    // Remaining stock available to sell
     const remaining = totalUnits - currentSold;
     if (increment > remaining) {
       return alert(`You only have ${remaining} units left.`);
     }
 
     try {
-      setSavingSoldId(itemId); // UI: show "Saving..." on the specific button
+      setSavingSoldId(itemId);
 
-      const newSold = currentSold + increment; // incremental add
+      const newSold = currentSold + increment;
       const itemRef = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemId}`);
       await updateDoc(itemRef, { sold: newSold });
 
-       // Fetch latest item details for global sales record
-    const soldItem = items.find(it => it.id === itemId);
-    if (soldItem) {
-      const perUnitCost = Number(soldItem.perUnitWithGst) || 0;
-      const selling = Number(soldItem.sellingPrice) || 0;
+      // Add sales record
+      const soldItem = items.find(it => it.id === itemId);
+      if (soldItem) {
+        const perUnitCost = Number(soldItem.perUnitWithGst) || 0;
+        const selling = Number(soldItem.sellingPrice) || 0;
 
-      const revenue = selling * increment;
-      const profit = (selling - perUnitCost) * increment;
+        await addDoc(collection(db, "sales"), {
+          companyId,
+          itemId,
+          itemName: soldItem.name,
+          unitsSold: increment,
+          revenue: selling * increment,
+          profit: (selling - perUnitCost) * increment,
+          date: new Date().toISOString().split("T")[0],
+          timestamp: serverTimestamp(),
+        });
+      }
 
-      // Add a new sales record (GLOBAL)
-      await addDoc(collection(db, "sales"), {
-        companyId,
-        itemId,
-        itemName: soldItem.name,
-        unitsSold: increment,
-        revenue: revenue,
-        profit: profit,
-        date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
-        timestamp: serverTimestamp(),
-      });
-    }
-
-
-      // After saving, clear the input for this item only
       setSoldUnits(prev => ({ ...prev, [itemId]: '' }));
 
-      // Check if ALL items are sold -> mark arrivalDate as "Sold"
+      // Check if all items sold
       const ref = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
       const snapshot = await getDocs(ref);
       const allItems = snapshot.docs.map(d => d.data());
@@ -158,7 +185,7 @@ export default function StockItemsOnDate() {
         await updateDoc(arrivalDateRef, { status: 'Sold' });
       }
 
-      fetchItems();
+      await fetchItems();
     } catch (err) {
       console.error('Error updating sold units:', err);
     } finally {
@@ -170,52 +197,39 @@ export default function StockItemsOnDate() {
     try {
       const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemId}`);
       await deleteDoc(ref);
-      fetchItems();
+      await fetchItems();
     } catch (err) {
       console.error('Error deleting item:', err);
     }
   };
 
-  // Calculate total bill & profit dynamically
+  // ===== EFFECTS =====
   useEffect(() => {
-    let bill = 0;
-    let profit = 0;
-
-    items.forEach(item => {
-      const sold = Number(item.sold) || 0;
-      const perUnitCostWithGst = Number(item.perUnitWithGst) || 0;
-      const selling = Number(item.sellingPrice) || 0;
-      const lineTotalWithGst = Number(item.totalCostWithGst) || 0;
-
-      bill += lineTotalWithGst; // total bill includes GST
-      // Profit on sold portion only
-      profit += (selling - perUnitCostWithGst) * sold;
-    });
-
-    setTotalBill(to2(bill));
-    setTotalProfit(to2(profit));
+    const { bill, profit } = calculateTotals(items);
+    setTotalBill(bill);
+    setTotalProfit(profit);
   }, [items]);
 
-  // Live preview calculation inside form (helps user decide selling price)
+  // Update form preview on input changes
   useEffect(() => {
     const boxPrice = parseFloat(formData.boxPrice) || 0;
     const gst = parseFloat(formData.gst) || 0;
     const unitsPerBox = parseInt(formData.unitsPerBox) || 1;
 
-    const boxPriceWithGst = boxPrice * (1 + gst / 100);
-    setCalculatedBoxPriceWithGst((to2(boxPriceWithGst)).toFixed(2));
+    const boxPriceWithGst = calculateBoxPricing(boxPrice, gst);
+    const { withoutGst, withGst } = calculatePerUnitPrices(boxPrice, boxPriceWithGst, unitsPerBox);
 
-    // Calculate per-unit prices in preview (display-only)
-    const perUnitWithoutGst = boxPrice / unitsPerBox;
-    const perUnitWithGst = boxPriceWithGst / unitsPerBox;
-
-    setCalculatedPerUnitWithoutGst((to2(perUnitWithoutGst)).toFixed(2));
-    setCalculatedPerUnitWithGst((to2(perUnitWithGst)).toFixed(2));
+    setPreview({
+      boxPriceWithGst: boxPriceWithGst.toFixed(2),
+      perUnitWithoutGst: withoutGst.toFixed(2),
+      perUnitWithGst: withGst.toFixed(2)
+    });
   }, [formData.boxPrice, formData.gst, formData.unitsPerBox]);
 
+  // Load items on mount/param change
   useEffect(() => {
     fetchItems();
-  }, [companyId, dateId]);
+  }, [companyId, dateId, fetchItems]);
 
   return (
     <div className="items-wrapper">
@@ -326,11 +340,11 @@ export default function StockItemsOnDate() {
               onChange={e => setFormData({ ...formData, gst: e.target.value })}
             />
 
-            {/* Live Preview Section (display only) */}
+            {/* Live Preview Section */}
             <div className="preview">
-              <p>📦 Box Price with GST: ₹{calculatedBoxPriceWithGst}</p>
-              <p>🔹 Per Unit w/o GST: ₹{calculatedPerUnitWithoutGst}</p>
-              <p>🔹 Per Unit with GST: ₹{calculatedPerUnitWithGst}</p>
+              <p>📦 Box Price with GST: ₹{preview.boxPriceWithGst}</p>
+              <p>🔹 Per Unit w/o GST: ₹{preview.perUnitWithoutGst}</p>
+              <p>🔹 Per Unit with GST: ₹{preview.perUnitWithGst}</p>
             </div>
 
             <input
@@ -353,6 +367,10 @@ export default function StockItemsOnDate() {
 
 
 /**
- * Add Global profit variable 
- * add dates on every sold to calculate profit and revenue on that month
+ * TODO: Add global profit calculation by date for monthly analytics
  */
+
+
+
+
+

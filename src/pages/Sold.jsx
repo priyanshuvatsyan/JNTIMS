@@ -4,14 +4,18 @@ import ResponsiveNav from '../components/ResponsiveNav';
 import './styles/Home.css';
 import './styles/Dashboard.css';
 import AllStockItems from '../components/AllStockItems';
-import MonthlyReport from '../components/DashBoard/MonthlyReport';
-import MonthlySales from '../components/DashBoard/MonthlySales';
 
-export default function Dashboard() {
+export default function Sold() {
   return (
-    <div className='dashboard' >
-      <MonthlyReport />
-      <MonthlySales />
+    <div className="home-container">
+      <div className="nav">
+        <Nav />
+      </div>
+      <div className="content">
+       <AllStockItems />
+      </div>
+      <ResponsiveNav />
     </div>
+
   )
 }
