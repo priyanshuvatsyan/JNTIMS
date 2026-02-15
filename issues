@@ -14,3 +14,5 @@
 7.  (1) Inconsistency in amount and totalpayable in DB (both are doing the same task)
 
 8. (7)On site load add amounts are being calculated to comulativePaid(PaymentDetails.jsx)   
+
+9. fix all stock items page (sold) selling logic (something is wrong with sell button) and style

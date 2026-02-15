@@ -15,7 +15,9 @@ import {
   PieChart,
   Pie,
   Cell
+  ,LabelList
 } from "recharts";
+import "./styles/MonthlySales.css";
 
 export default function MonthlySales() {
   const [monthlyData, setMonthlyData] = useState({
@@ -25,6 +27,7 @@ export default function MonthlySales() {
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [allMonths, setAllMonths] = useState([]);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   // Function to fetch sales data for current and previous month
   const fetchMonthlySalesData = async () => {
@@ -82,8 +85,15 @@ export default function MonthlySales() {
     fetchMonthlySalesData();
   }, []);
 
+  useEffect(() => {
+    const check = () => setIsSmallScreen(window.innerWidth <= 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   if (loading) {
-    return <div style={{ padding: "1rem" }}>Loading...</div>;
+    return <div className="ms-loading">Loading...</div>;
   }
 
   // Get current and previous month data based on selection
@@ -121,99 +131,129 @@ export default function MonthlySales() {
     : "N/A";
 
   return (
-    <div style={{ padding: "1.5rem", backgroundColor: "#f9f9f9", minHeight: "100vh" }}>
-      <h2 style={{ marginBottom: "2rem", color: "#333" }}>📈 Monthly Sales Analysis</h2>
+    <div className="ms-root">
+      <h2 className="ms-title">📈 Monthly Sales Analysis</h2>
 
-      {/* Month Slider */}
-      <div style={{
-        backgroundColor: "#fff",
-        borderRadius: "8px",
-        padding: "2rem",
-        marginBottom: "2rem",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-      }}>
-        <h3 style={{ marginTop: 0, color: "#333" }}>Select Month to Compare</h3>
-        <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-          <input
-            type="range"
-            min="0"
-            max={Math.max(0, allMonths.length - 1)}
-            value={allMonths.indexOf(selectedMonth)}
-            onChange={(e) => setSelectedMonth(allMonths[parseInt(e.target.value)])}
-            style={{ flex: 1, height: "6px", cursor: "pointer" }}
-          />
-          <div style={{
-            minWidth: "150px",
-            textAlign: "center",
-            padding: "0.8rem",
-            backgroundColor: "#e3f2fd",
-            borderRadius: "6px",
-            fontWeight: "bold",
-            color: "#1976d2"
-          }}>
-            {selectedMonth}
+      {/* Month Navigation (buttons will appear left/right of the chart) */}
+
+      {/* Combined Line Chart - Revenue, Profit & Sales */}
+      <div className="ms-card">
+        <h3 className="ms-card-title">Revenue, Profit & Sales Comparison</h3>
+        <div className="ms-chart-row">
+          <button
+            onClick={() => {
+              const idx = allMonths.indexOf(selectedMonth);
+              if (idx < allMonths.length - 1) {
+                setSelectedMonth(allMonths[idx + 1]);
+              }
+            }}
+            disabled={allMonths.indexOf(selectedMonth) >= allMonths.length - 1}
+            aria-label="Previous month"
+            className="ms-btn"
+          >
+            ←
+          </button>
+
+          <div className="ms-chart">
+            {/* render three separate small charts for clarity */}
+            {(() => {
+              const revenueData = [
+                { label: selectedMonth, value: current.revenue }
+              ];
+              const profitData = [
+                { label: selectedMonth, value: current.profit }
+              ];
+              const salesData = [
+                { label: selectedMonth, value: current.salesCount }
+              ];
+
+              return (
+                <div className="metric-charts">
+                  <div className="metric-card metric-card--compact">
+                    <div className="metric-title">Revenue</div>
+                    <ResponsiveContainer width="100%" height={360}>
+                      <BarChart data={revenueData} margin={{ top: 80, right: 10, left: 8, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="gRev" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#4fc3f7" />
+                            <stop offset="100%" stopColor="#0288d1" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f0f0f0" />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} />
+                        <YAxis axisLine={false} tickLine={false} tickFormatter={(v)=>`₹${v}`} />
+                        <Tooltip formatter={(v) => (typeof v === 'number' ? `₹${v.toFixed(2)}` : v)} />
+                          <Bar dataKey="value" fill="url(#gRev)" barSize={56} radius={[6,6,6,6]} animationDuration={600}>
+                          <LabelList dataKey="value" position="top" formatter={v=>`₹${Number(v).toFixed(0)}`} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="metric-card metric-card--compact">
+                    <div className="metric-title">Profit</div>
+                    <ResponsiveContainer width="100%" height={360}>
+                      <BarChart data={profitData} margin={{ top: 80, right: 10, left: 8, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="gProfit" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#81c784" />
+                            <stop offset="100%" stopColor="#388e3c" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f7f7f7" />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} />
+                        <YAxis axisLine={false} tickLine={false} tickFormatter={(v)=>`₹${v}`} />
+                        <Tooltip formatter={(v) => (typeof v === 'number' ? `₹${v.toFixed(2)}` : v)} />
+                          <Bar dataKey="value" fill="url(#gProfit)" barSize={52} radius={[6,6,6,6]} animationDuration={600}>
+                          <LabelList dataKey="value" position="top" formatter={v=>`₹${Number(v).toFixed(0)}`} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="metric-card metric-card--compact">
+                    <div className="metric-title">Sales Count</div>
+                    <ResponsiveContainer width="100%" height={360}>
+                      <BarChart data={salesData} margin={{ top: 80, right: 10, left: 8, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="gSales" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stopColor="#ffd54f" />
+                            <stop offset="100%" stopColor="#fb8c00" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#fafafa" />
+                        <XAxis dataKey="label" axisLine={false} tickLine={false} />
+                        <YAxis axisLine={false} tickLine={false} />
+                        <Tooltip formatter={(v) => v} />
+                          <Bar dataKey="value" fill="url(#gSales)" barSize={48} radius={[6,6,6,6]} animationDuration={600}>
+                          <LabelList dataKey="value" position="top" />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
+
+          <button
+            onClick={() => {
+              const idx = allMonths.indexOf(selectedMonth);
+              if (idx > 0) {
+                setSelectedMonth(allMonths[idx - 1]);
+              }
+            }}
+            disabled={allMonths.indexOf(selectedMonth) <= 0}
+            aria-label="Next month"
+            className="ms-btn"
+          >
+            →
+          </button>
         </div>
       </div>
 
-      {/* Combined Line Chart - Revenue, Profit, Sales */}
-      <div style={{
-        backgroundColor: "#fff",
-        borderRadius: "8px",
-        padding: "2rem",
-        marginBottom: "2rem",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-      }}>
-        <h3 style={{ marginTop: 0, color: "#333" }}>Revenue, Profit & Sales Comparison</h3>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={combinedData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis yAxisId="left" label={{ value: "Amount (₹)", angle: -90, position: "insideLeft" }} />
-            <YAxis yAxisId="right" orientation="right" label={{ value: "Sales Count", angle: 90, position: "insideRight" }} />
-            <Tooltip 
-              formatter={(value) => `${typeof value === "number" ? value.toFixed(2) : value}`}
-              contentStyle={{ backgroundColor: "#f5f5f5", border: "1px solid #ccc" }}
-            />
-            <Legend />
-            <Line 
-              yAxisId="left"
-              type="monotone" 
-              dataKey="revenue" 
-              stroke="#2196F3" 
-              strokeWidth={3}
-              name="Revenue"
-              dot={{ fill: "#2196F3", r: 6 }}
-            />
-            <Line 
-              yAxisId="left"
-              type="monotone" 
-              dataKey="profit" 
-              stroke="#4CAF50" 
-              strokeWidth={3}
-              name="Profit"
-              dot={{ fill: "#4CAF50", r: 6 }}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey="sales" 
-              stroke="#FF9800" 
-              strokeWidth={3}
-              name="Sales Count"
-              dot={{ fill: "#FF9800", r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
       {/* Stats Cards */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-        gap: "1.5rem",
-        marginBottom: "2rem"
-      }}>
+      <div className="ms-stats-grid">
         <StatsCard
           label="💰 Revenue"
           currentVal={current.revenue}
@@ -244,31 +284,25 @@ export default function MonthlySales() {
       </div>
 
       {/* Summary Stats */}
-      <div style={{
-        backgroundColor: "#fff",
-        padding: "2rem",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-      }}>
-        <h3 style={{ marginTop: 0 }}>📋 Detailed Summary</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
-          <div style={{ padding: "1.5rem", backgroundColor: "#e3f2fd", borderRadius: "6px" }}>
-            <p style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#1976d2", margin: "0 0 1rem 0" }}>
+      <div className="ms-summary">
+        <h3>📋 Detailed Summary</h3>
+        <div className="ms-summary-grid">
+          <div className="summary-item summary-item--primary">
+            <p className="title">
               {selectedMonth}
             </p>
-            <ul style={{ margin: 0, padding: "0 0 0 1.5rem", lineHeight: "1.8" }}>
+            <ul>
               <li>Revenue: <strong>₹{current.revenue.toFixed(2)}</strong></li>
               <li>Profit: <strong>₹{current.profit.toFixed(2)}</strong></li>
               <li>Sales: <strong>{current.salesCount}</strong></li>
               <li>Profit Margin: <strong>{current.revenue !== 0 ? ((current.profit / current.revenue) * 100).toFixed(2) : 0}%</strong></li>
             </ul>
           </div>
-          
-          <div style={{ padding: "1.5rem", backgroundColor: "#f3e5f5", borderRadius: "6px" }}>
-            <p style={{ fontSize: "1.2rem", fontWeight: "bold", color: "#7b1fa2", margin: "0 0 1rem 0" }}>
+          <div className="summary-item summary-item--secondary">
+            <p className="title">
               {allMonths[previousMonthIndex] || "Previous Month"}
             </p>
-            <ul style={{ margin: 0, padding: "0 0 0 1.5rem", lineHeight: "1.8" }}>
+            <ul>
               <li>Revenue: <strong>₹{previous.revenue.toFixed(2)}</strong></li>
               <li>Profit: <strong>₹{previous.profit.toFixed(2)}</strong></li>
               <li>Sales: <strong>{previous.salesCount}</strong></li>
@@ -286,31 +320,19 @@ const StatsCard = ({ label, currentVal, prevVal, change, isCurrency = true, curr
   const changeSymbol = change >= 0 ? "↑" : "↓";
 
   return (
-    <div style={{
-      backgroundColor: "#fff",
-      border: "2px solid #e0e0e0",
-      borderRadius: "8px",
-      padding: "1.5rem",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-    }}>
-      <h4 style={{ margin: "0 0 1rem 0", color: "#333" }}>{label}</h4>
-      
-      <div style={{ marginBottom: "1rem" }}>
-        <p style={{ color: "#666", margin: "0 0 0.5rem 0", fontSize: "0.9rem" }}>{currentMonth}</p>
-        <p style={{ fontSize: "1.5rem", fontWeight: "bold", margin: 0, color: "#2196F3" }}>
+    <div className="stats-card">
+      <h4>{label}</h4>
+
+      <div className="stat-current-wrap">
+        <p className="stat-month">{currentMonth}</p>
+        <p className="stat-value">
           {isCurrency ? "₹" : ""}{typeof currentVal === "number" ? currentVal.toFixed(2) : currentVal}
         </p>
       </div>
 
-      <div style={{
-        backgroundColor: changeColor,
-        color: "white",
-        padding: "1rem",
-        borderRadius: "6px",
-        textAlign: "center"
-      }}>
-        <p style={{ margin: "0 0 0.5rem 0", fontSize: "0.9rem" }}>vs {previousMonth}</p>
-        <p style={{ margin: 0, fontSize: "1.3rem", fontWeight: "bold" }}>
+      <div className="stat-changebox" style={{ backgroundColor: changeColor }}>
+        <p>vs {previousMonth}</p>
+        <p>
           {changeSymbol} {change === "N/A" ? change : `${Math.abs(change)}%`}
         </p>
       </div>
