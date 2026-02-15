@@ -1,0 +1,355 @@
+.mr-root {
+    padding: 1.25rem;
+    background: #f7f8fb;
+    border-radius: 8px
+}
+
+.mr-header {
+    font-size: 1.25rem;
+    margin: 0 0 1rem 0;
+    color: #2b3948;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem
+}
+
+.mr-month-list {
+    margin: 0 0 1.25rem 0;
+    padding: 0
+}
+
+.mr-month-item {
+    background: linear-gradient(90deg, #fff, #fbfdff);
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #eceff3;
+    margin: 0.45rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    transition: transform .15s ease, box-shadow .15s ease
+}
+
+.mr-month-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(11, 22, 48, 0.06)
+}
+
+.mr-month-label {
+    font-weight: 700;
+    color: #1f2d3d
+}
+
+.mr-month-values {
+    color: #3b4a5a;
+    font-size: 0.95rem
+}
+
+.stock_statistics {
+    margin-top: 1rem
+}
+
+.stock-stat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0 0 0.75rem 0
+}
+
+.stock-stat {
+    background: #fff;
+    padding: 0.65rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #eef2f6;
+    min-width: 180px;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.03)
+}
+
+.stock-breakdown {
+    margin-top: 0.75rem;
+    background: linear-gradient(180deg, #ffffff, #fbfdff);
+    padding: 0.9rem;
+    border-radius: 8px;
+    border: 1px solid #eef2f6
+}
+
+.stock-breakdown h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2b3948
+}
+
+.stock-list {
+    list-style: none;
+    padding: 0;
+    margin: 0
+}
+
+.stock-list li {
+    padding: 0.45rem 0;
+    border-bottom: 1px dashed #eee;
+    display: flex;
+    justify-content: space-between
+}
+
+.stock-list li strong {
+    color: #172033
+}
+
+.toggle-btn {
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all .15s ease
+}
+
+.toggle-btn--active {
+    background: #fff;
+    color: #2b3948;
+    border-color: #dfe7ee
+}
+
+.toggle-btn--inactive {
+    background: #2b3948;
+    color: #fff
+}
+
+.sales-details {
+    margin-top: 1rem
+}
+
+.sales-list {
+    max-height: 360px;
+    overflow: auto;
+    padding: 0;
+    margin: 0
+}
+
+.sale-item {
+    background: #fff;
+    border: 1px solid #e6edf3;
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    box-shadow: 0 2px 6px rgba(11, 22, 48, 0.03)
+}
+
+.no-sales {
+    padding: 1rem;
+    text-align: center;
+    color: #8b9aa6
+}
+
+@media (max-width:720px) {
+    .mr-root {
+        padding: 0.8rem
+    }
+
+    .mr-month-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem
+    }
+
+    .stock-stat {
+        min-width: 140px
+    }
+
+    .stock-list li {
+        flex-direction: column;
+        align-items: flex-start
+    }
+}
+
+:root {
+    --mr-bg: #f6f8fb;
+    --mr-card: #ffffff;
+    --mr-border: #e6eef6;
+    --mr-primary: #1e3a8a; /* deep blue */
+    --mr-accent: #0ea5a4; /* teal */
+    --mr-muted: #556170;
+    --mr-success: #16a34a;
+}
+
+.mr-root {
+    padding: 1.25rem;
+    background: var(--mr-bg);
+    border-radius: 10px
+}
+
+.mr-header {
+    font-size: 1.25rem;
+    margin: 0 0 1rem 0;
+    color: var(--mr-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem
+}
+
+.mr-month-list {
+    margin: 0 0 1.25rem 0;
+    padding: 0
+}
+
+.mr-month-item {
+    background: linear-gradient(90deg, var(--mr-card), #f8fcfb);
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--mr-border);
+    margin: 0.45rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(16, 24, 40, 0.04);
+    transition: transform .18s ease, box-shadow .18s ease
+}
+
+.mr-month-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.08)
+}
+
+.mr-month-label {
+    font-weight: 800;
+    color: var(--mr-primary)
+}
+
+.mr-month-values {
+    color: var(--mr-muted);
+    font-size: 0.95rem
+}
+
+.stock_statistics {
+    margin-top: 1rem
+}
+
+.stock-stat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0 0 0.75rem 0
+}
+
+.stock-stat {
+    background: linear-gradient(180deg, var(--mr-card), #fbfeff);
+    padding: 0.65rem 0.8rem;
+    border-radius: 10px;
+    border: 1px solid var(--mr-border);
+    min-width: 180px;
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+.stock-stat strong {
+    color: var(--mr-accent);
+    font-size: 0.95rem
+}
+
+.stock-breakdown {
+    margin-top: 0.75rem;
+    background: linear-gradient(180deg, var(--mr-card), #fbfeff);
+    padding: 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--mr-border);
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04)
+}
+
+.stock-breakdown h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--mr-primary)
+}
+
+.stock-list {
+    list-style: none;
+    padding: 0;
+    margin: 0
+}
+
+.stock-list li {
+    padding: 0.45rem 0;
+    border-bottom: 1px dashed #eef4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center
+}
+
+.stock-list li strong {
+    color: #0f1724
+}
+
+.toggle-btn {
+    padding: 0.55rem 1rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 800;
+    transition: all .15s ease
+}
+
+.toggle-btn--active {
+    background: var(--mr-card);
+    color: var(--mr-primary);
+    border-color: var(--mr-border);
+    box-shadow: inset 0 -2px 0 rgba(14, 165, 164, 0.03)
+}
+
+.toggle-btn--inactive {
+    background: linear-gradient(90deg, var(--mr-primary), #15326a);
+    color: #fff
+}
+
+.sales-details {
+    margin-top: 1rem
+}
+
+.sales-list {
+    max-height: 360px;
+    overflow: auto;
+    padding: 0;
+    margin: 0
+}
+
+.sale-item {
+    background: linear-gradient(180deg, var(--mr-card), #fbfeff);
+    border: 1px solid var(--mr-border);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    box-shadow: 0 8px 20px rgba(11, 22, 48, 0.04)
+}
+
+.sale-item p {
+    margin: 0 0 0.25rem 0;
+    color: var(--mr-muted)
+}
+
+.no-sales {
+    padding: 1rem;
+    text-align: center;
+    color: #8b9aa6
+}
+
+@media (max-width:720px) {
+    .mr-root {
+        padding: 0.8rem
+    }
+
+    .mr-month-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem
+    }
+
+    .stock-stat {
+        min-width: 140px
+    }
+
+    .stock-list li {
+        flex-direction: column;
+        align-items: flex-start
+    }
+}

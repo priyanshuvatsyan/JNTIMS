@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../firebase"; // adjust path if needed
+import "./styles/MonthlyReport.css";
 
 export default function MonthlyReport() {
   const [stats, setStats] = useState({});
@@ -134,29 +135,35 @@ export default function MonthlyReport() {
   }, []);
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <h2>📊 Monthly Revenue & Profit</h2>
-      {Object.entries(stats).map(([month, { revenue, profit }]) => (
-        <div key={month} style={{ margin: "0.5rem 0" }}>
-          <strong>{month}</strong> → Revenue: ₹{revenue}, Profit: ₹{profit}
-        </div>
-      ))}
+    <div className="mr-root">
+      <h2 className="mr-header">📊 Monthly Revenue & Profit</h2>
+      <div className="mr-month-list">
+        {Object.entries(stats).map(([month, { revenue, profit }]) => (
+          <div key={month} className="mr-month-item">
+            <div className="mr-month-label">{month}</div>
+            <div className="mr-month-values">Revenue: ₹{revenue.toLocaleString()}, Profit: ₹{profit.toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
 
       {/* Stock Statistics */}
-      <div className="stock_statistics" >
+      <div className="stock_statistics">
         <h3>Stock Statistics</h3>
-        <p><strong>Stock Varieties Available:</strong> {stockStats.totalVarieties}</p>
-        <p><strong>Total Units in Stock:</strong> {stockStats.totalUnits}</p>
-        <p><strong>Total Items Sold This Month:</strong> {stockStats.totalSoldThisMonth} units</p>
-        
+        <div className="stock-stat-grid">
+          <div className="stock-stat"><strong>Varieties</strong><div>{stockStats.totalVarieties}</div></div>
+          <div className="stock-stat"><strong>Units</strong><div>{stockStats.totalUnits}</div></div>
+          <div className="stock-stat"><strong>Sold (this mo)</strong><div>{stockStats.totalSoldThisMonth}</div></div>
+        </div>
+
         {/* Stock Breakdown */}
         {stockStats.stockItems.length > 0 && (
-          <div style={{ marginTop: "1rem", backgroundColor: "#fff", padding: "0.8rem", borderRadius: "6px" }}>
-            <h4>Stock Breakdown:</h4>
-            <ul style={{ listStyle: "none", padding: 0 }}>
+          <div className="stock-breakdown">
+            <h4>Stock Breakdown</h4>
+            <ul className="stock-list">
               {stockStats.stockItems.map((item, index) => (
-                <li key={index} style={{ padding: "0.4rem 0", borderBottom: "1px solid #eee" }}>
-                  <strong>{item.itemName}</strong> ({item.companyName}) - {item.remaining} units
+                <li key={index}>
+                  <strong>{item.itemName}</strong>
+                  <span>{item.companyName} — <em>{item.remaining} units</em></span>
                 </li>
               ))}
             </ul>
@@ -167,31 +174,21 @@ export default function MonthlyReport() {
       {/* Toggle Button for Sales Details */}
       <button
         onClick={() => setShowSalesDetails(!showSalesDetails)}
-        style={{
-          padding: "0.6rem 1.2rem",
-          backgroundColor: showSalesDetails ? "#ff6b6b" : "#4CAF50",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontSize: "1rem",
-          fontWeight: "bold",
-          marginBottom: "1rem"
-        }}
+        className={`toggle-btn ${showSalesDetails ? "toggle-btn--active" : "toggle-btn--inactive"}`}
       >
         {showSalesDetails ? "Hide Sales Details" : "Show Sales Details"}
       </button>
 
       {/* Sales Details - Conditional Render */}
       {showSalesDetails && (
-        <div>
-          <h2>All Sales Details</h2>
-          <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+        <div className="sales-details">
+          <h2 className="mr-header">All Sales Details</h2>
+          <div className="sales-list">
             {allSales.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#999" }}>No sales records found</p>
+              <div className="no-sales">No sales records found</div>
             ) : (
               allSales.map((sale, index) => (
-                <div key={index} style={{ border: "1px solid #ccc", padding: "0.5rem", margin: "0.5rem 0" }}>
+                <div key={index} className="sale-item">
                   <p><strong>Company:</strong> {sale.companyName}</p>
                   <p><strong>Item:</strong> {sale.itemName}</p>
                   <p><strong>Date:</strong> {sale.date}</p>
