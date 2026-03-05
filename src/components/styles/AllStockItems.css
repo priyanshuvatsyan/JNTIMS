@@ -1,61 +1,123 @@
+/* ===== Main Container ===== */
 .all-stock-items {
-  padding: 20px;
+  min-height: 100vh;
+  padding: 40px 30px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background-color: #ffffff;
+  color: #2F1919;
 }
 
+/* ===== Heading ===== */
 .all-stock-items h2 {
-  margin-bottom: 20px;
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #2F1919;
+  border-left: 5px solid #2F1919;
+  padding-left: 12px;
 }
 
+/* ===== Grid Layout ===== */
 .items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
 }
 
+/* ===== Card ===== */
 .item-card {
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background-color: #faf6f6; /* very soft warm tint */
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #e8dede;
+  transition: all 0.25s ease;
 }
 
+.item-card:hover {
+  border-color: #2F1919;
+  box-shadow: 0 8px 20px rgba(47, 25, 25, 0.08);
+}
+
+/* ===== Item Info ===== */
 .item-info h3 {
-  margin: 0 0 5px 0;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #2F1919;
 }
 
 .item-info p {
-  margin: 2px 0;
-  color: #555;
+  font-size: 14px;
+  margin: 5px 0;
+  color: #5c3a3a;
 }
 
+/* Units Highlight */
+.item-info p:nth-child(4) {
+  font-weight: 600;
+  color: #2F1919;
+}
+
+/* ===== Sell Section ===== */
 .sell-section {
+  margin-top: 15px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 10px;
+  align-items: center;
 }
 
+/* ===== Input ===== */
 .sell-section input {
-  width: 100%;
-  padding: 10px;
- margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #d8c7c7;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s ease;
+  background-color: #ffffff;
+  color: #2F1919;
 }
 
+.sell-section input:focus {
+  border-color: #2F1919;
+  box-shadow: 0 0 0 3px rgba(47, 25, 25, 0.15);
+}
+
+/* ===== Button ===== */
 .sell-section button {
-  padding: 5px 15px;
-  background: #301616;
-  color: white;
+  padding: 9px 16px;
+  border-radius: 8px;
   border: none;
-  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  background-color: #2F1919;
+  color: #ffffff;
+  transition: 0.2s ease;
+}
+
+.sell-section button:hover {
+  background-color: #4a2a2a;
 }
 
 .sell-section button:disabled {
-  background: #ccc;
+  background-color: #bca5a5;
   cursor: not-allowed;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .all-stock-items {
+    padding: 20px;
+  }
+
+  .sell-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sell-section button {
+    width: 100%;
+  }
 }

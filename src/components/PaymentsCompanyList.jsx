@@ -26,7 +26,7 @@ export default function PaymentsCompanyList({ onSelectCompany }) {
   return (
     <div className="company-list-wrapper">
       <h2 className="company-list-heading">Choose Company for Payments</h2>
-      <ul className="company-list">
+      <ul className=" company-list-payments"> 
         {companies.map(company => (
           <li key={company.id} className="company-card" onClick={() => onSelectCompany && onSelectCompany(company.id)}>
             <span className="company-link">
