@@ -74,16 +74,24 @@ export default function StockItemsOnDate() {
   const [totalBill, setTotalBill] = useState(0);
   const [totalProfit, setTotalProfit] = useState(0);
 
+  // Loading states
+  const [loading, setLoading] = useState(true);
+  const [addingItem, setAddingItem] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
 
   // ===== FIREBASE OPERATIONS =====
   const fetchItems = useCallback(async () => {
     try {
+      setLoading(true);
       const ref = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
       const snapshot = await getDocs(ref);
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setItems(data);
     } catch (err) {
       console.error('Error fetching items:', err);
+    } finally {
+      setLoading(false);
     }
   }, [companyId, dateId]);
 

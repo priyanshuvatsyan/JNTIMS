@@ -7,6 +7,7 @@ import './styles/AddCompanies.css';
 export default function AddCompanies({ onCompanyAdded }) {
   const [companyName, setCompanyName] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleAddCompany = async (e) => {
     e.preventDefault();
@@ -15,6 +16,7 @@ export default function AddCompanies({ onCompanyAdded }) {
       return;
     }
     try {
+      setLoading(true);
       const docRef = await addDoc(collection(db, 'companies'), {
         name: companyName,
         createdAt: Timestamp.now(),
@@ -26,6 +28,8 @@ export default function AddCompanies({ onCompanyAdded }) {
     } catch (error) {
       console.error(error);
       alert('Error adding company');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,7 +59,9 @@ export default function AddCompanies({ onCompanyAdded }) {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">Create</button>
+                <button type="submit" className="submit-btn" disabled={loading}>
+                  {loading ? 'Creating...' : 'Create'}
+                </button>
               </div>
             </form>
           </div>

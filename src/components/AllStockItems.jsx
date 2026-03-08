@@ -10,9 +10,11 @@ export default function AllStockItems() {
   const [companies, setCompanies] = useState([]);
   const [selectedCompanies, setSelectedCompanies] = useState([]);
   const [stockFilter, setStockFilter] = useState('all'); // 'all', 'in-stock', 'out-of-stock'
+  const [loading, setLoading] = useState(true);
 
   const fetchAllItems = async () => {
     try {
+      setLoading(true);
       const companiesSnapshot = await getDocs(collection(db, 'companies'));
       const allItemsData = [];
       const companiesData = [];
@@ -50,6 +52,8 @@ export default function AllStockItems() {
       setCompanies(companiesData);
     } catch (error) {
       console.error('Error fetching all items:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -195,8 +199,14 @@ export default function AllStockItems() {
         </div>
       </div>
 
-      <div className="items-list">
-        {getFilteredItems().map(item => (
+      {loading ? (
+        <div className="loading-screen">
+          <div className="loading-spinner"></div>
+          <p>Loading stock items...</p>
+        </div>
+      ) : (
+        <div className="items-list">
+          {getFilteredItems().map(item => (
           <div key={item.id} className="item-card">
             <div className="item-info">
               <h3>{item.name}</h3>
@@ -222,6 +232,7 @@ export default function AllStockItems() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
