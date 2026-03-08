@@ -30,10 +30,13 @@ export default function AllCompanies() {
 
   const [companies, setCompanies] = useState([]);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
 
 
   const fetchCompanies = async () => {
     try {
+      setLoading(true);
       const snapshoty = await getDocs(collection(db, 'companies'));
       const data = snapshoty.docs.map(doc => ({
         id: doc.id,
@@ -42,6 +45,8 @@ export default function AllCompanies() {
       setCompanies(data);
     } catch (error) {
       console.error("Error fetching companies: ", error);
+    } finally {
+      setLoading(false);
     }
   }
   const handleDelete = async (companyId) => {
@@ -51,6 +56,7 @@ export default function AllCompanies() {
     // Optimistically remove from UI
     setCompanies(prev => prev.filter(c => c.id !== companyId));
     try {
+      setDeletingId(companyId);
       // Delete subcollections first
       const paymentsRef = collection(db, 'companies', companyId, 'payments');
       console.log(`Deleting payments for company: ${companyId}`);
@@ -69,6 +75,8 @@ export default function AllCompanies() {
       // Revert the UI change if DB delete fails
       setCompanies(prev => [...prev, companyToDelete]);
       alert('Failed to delete company and associated data from database. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -81,8 +89,14 @@ export default function AllCompanies() {
   return (
     <div className="companies-wrapper">
       <h3>All Companies</h3>
-      <ul className="company-list">
-        {companies.map(company => (
+      {loading ? (
+        <div className="loading-screen">
+          <div className="loading-spinner"></div>
+          <p>Loading companies...</p>
+        </div>
+      ) : (
+        <ul className="company-list">
+          {companies.map(company => (
           <li
   className="company-card"
   key={company.id}
@@ -102,12 +116,13 @@ export default function AllCompanies() {
       handleDelete(company.id);
     }}
   >
-    🗑️
+    {deletingId === company.id ? '⏳' : '🗑️'}
   </div>
 </li>
 
         ))}
       </ul>
+      )}
       <div className="add">
         <AddCompanies  onCompanyAdded={fetchCompanies}  />
       </div>

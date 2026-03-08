@@ -26,10 +26,14 @@ export default function StockArrival() {
   const [amount, setAmount] = useState('');
   const [activeTab, setActiveTab] = useState('stock');
   const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [addingDate, setAddingDate] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   // 🔹 Fetch arrival dates + calculate amount from items
   const fetchArrivalDates = async () => {
     try {
+      setLoading(true);
       const ref = collection(db, `companies/${companyId}/arrivalDates`);
       const q = query(ref, orderBy('timestamp', 'desc'));
       const snapshot = await getDocs(q);
@@ -59,6 +63,8 @@ export default function StockArrival() {
       setArrivalDates(dates);
     } catch (err) {
       console.error('Error fetching arrival dates', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,6 +73,7 @@ const handleAddDate = async () => {
   if (!newDate || !amount) return alert('Please fill all fields');
 
   try {
+    setAddingDate(true);
     // Add the arrival
     const ref = collection(db, `companies/${companyId}/arrivalDates`);
     const amt = parseFloat(amount) || 0;
@@ -90,6 +97,8 @@ const handleAddDate = async () => {
     fetchArrivalDates();
   } catch (err) {
     console.error('Error adding new date', err);
+  } finally {
+    setAddingDate(false);
   }
 };
 
@@ -97,6 +106,7 @@ const handleAddDate = async () => {
   // 🔹 Delete arrival date
   const handleDelete = async (dateId) => {
     try {
+      setDeletingId(dateId);
       // First, delete all stockItems under this date
       const itemsRef = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
       const itemsSnapshot = await getDocs(itemsRef);
@@ -112,6 +122,8 @@ const handleAddDate = async () => {
     } catch (err) {
       console.error('Error deleting record', err);
       alert('Failed to delete record');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -183,8 +195,14 @@ const handleAddDate = async () => {
           </button>
         </div>
 
-        <ul className="arrival-date-list">
-          {filteredDates.map((date) => (
+        {loading ? (
+          <div className="loading-screen">
+            <div className="loading-spinner"></div>
+            <p>Loading arrival dates...</p>
+          </div>
+        ) : (
+          <ul className="arrival-date-list">
+            {filteredDates.map((date) => (
             <li className="arrival-date-item" key={date.id}>
               <Link to={`/company/${companyId}/date/${date.id}`} className="date-link" >
                 <div className="date-box">{date.date}</div>
@@ -214,10 +232,12 @@ const handleAddDate = async () => {
               <FaTrash
                 className="delete-icon"
                 onClick={() => handleDelete(date.id)}
+                style={{ opacity: deletingId === date.id ? 0.5 : 1 }}
               />
             </li>
           ))}
         </ul>
+        )}
 
         {showForm && activeTab === 'stock' && (
           <div className="add-date-form">
@@ -240,7 +260,9 @@ const handleAddDate = async () => {
               />
             </label>
 
-            <button onClick={handleAddDate}>Add</button>
+            <button onClick={handleAddDate} disabled={addingDate}>
+              {addingDate ? 'Adding...' : 'Add'}
+            </button>
           </div>
         )}
 

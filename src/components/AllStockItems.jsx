@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, updateDoc, doc, serverTimestamp, arrayUnion, increment } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, serverTimestamp, arrayUnion, increment, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import './styles/AllStockItems.css'; // We'll create this CSS file
 
@@ -7,15 +7,22 @@ export default function AllStockItems() {
   const [allItems, setAllItems] = useState([]);
   const [soldUnits, setSoldUnits] = useState({});
   const [savingSoldId, setSavingSoldId] = useState(null);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompanies, setSelectedCompanies] = useState([]);
+  const [stockFilter, setStockFilter] = useState('all'); // 'all', 'in-stock', 'out-of-stock'
+  const [loading, setLoading] = useState(true);
 
   const fetchAllItems = async () => {
     try {
+      setLoading(true);
       const companiesSnapshot = await getDocs(collection(db, 'companies'));
       const allItemsData = [];
+      const companiesData = [];
 
       for (const companyDoc of companiesSnapshot.docs) {
         const companyId = companyDoc.id;
         const companyName = companyDoc.data().name;
+        companiesData.push({ id: companyId, name: companyName });
 
         const datesRef = collection(db, `companies/${companyId}/arrivalDates`);
         const datesSnapshot = await getDocs(datesRef);
@@ -42,8 +49,11 @@ export default function AllStockItems() {
       }
 
       setAllItems(allItemsData);
+      setCompanies(companiesData);
     } catch (error) {
       console.error('Error fetching all items:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,7 +84,7 @@ export default function AllStockItems() {
         unitsSold: incrementValue,
         revenue,
         profit,
-        timestamp: serverTimestamp(),
+        timestamp: new Date(),
       };
 
       const itemRef = doc(db, `companies/${item.companyId}/arrivalDates/${item.dateId}/stockItems/${item.id}`);
@@ -87,10 +97,10 @@ export default function AllStockItems() {
 
       // Update global totals
       const globalRef = doc(db, 'totals', 'global');
-      await updateDoc(globalRef, {
+      await setDoc(globalRef, {
         totalRevenue: increment(revenue),
         totalProfit: increment(profit)
-      });
+      }, { merge: true });
 
       setSoldUnits(prev => ({ ...prev, [item.id]: '' }));
       setSavingSoldId(null);
@@ -101,11 +111,102 @@ export default function AllStockItems() {
     }
   };
 
+  const getFilteredItems = () => {
+    return allItems.filter(item => {
+      // Company filter
+      if (selectedCompanies.length > 0 && !selectedCompanies.includes(item.companyId)) {
+        return false;
+      }
+
+      // Stock filter
+      const availableUnits = item.units - (item.sold || 0);
+      if (stockFilter === 'in-stock' && availableUnits <= 0) {
+        return false;
+      }
+      if (stockFilter === 'out-of-stock' && availableUnits > 0) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
+  const handleStockFilterChange = (filter) => {
+    setStockFilter(filter);
+  };
+
   return (
     <div className="all-stock-items">
       <h2>All Stock Items</h2>
-      <div className="items-list">
-        {allItems.map(item => (
+      
+      {/* Filters */}
+      <div className="filters">
+        <div className="filter-section">
+          <h3>Filter by Company:</h3>
+          <div className="company-filters">
+            <select
+              value={selectedCompanies.length > 0 ? selectedCompanies[0] : ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedCompanies(value ? [value] : []);
+              }}
+              className="company-select"
+            >
+              <option value="">All Companies</option>
+              {companies.map(company => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="filter-section">
+          <h3>Filter by Stock Status:</h3>
+          <div className="stock-filters">
+            <label className="stock-filter">
+              <input
+                type="radio"
+                name="stockFilter"
+                value="all"
+                checked={stockFilter === 'all'}
+                onChange={(e) => handleStockFilterChange(e.target.value)}
+              />
+              All Items
+            </label>
+            <label className="stock-filter">
+              <input
+                type="radio"
+                name="stockFilter"
+                value="in-stock"
+                checked={stockFilter === 'in-stock'}
+                onChange={(e) => handleStockFilterChange(e.target.value)}
+              />
+              In Stock
+            </label>
+            <label className="stock-filter">
+              <input
+                type="radio"
+                name="stockFilter"
+                value="out-of-stock"
+                checked={stockFilter === 'out-of-stock'}
+                onChange={(e) => handleStockFilterChange(e.target.value)}
+              />
+              Out of Stock
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="loading-screen">
+          <div className="loading-spinner"></div>
+          <p>Loading stock items...</p>
+        </div>
+      ) : (
+        <div className="items-list">
+          {getFilteredItems().map(item => (
           <div key={item.id} className="item-card">
             <div className="item-info">
               <h3>{item.name}</h3>
@@ -131,6 +232,7 @@ export default function AllStockItems() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }
