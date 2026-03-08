@@ -21,6 +21,7 @@ export default function PaymentsCompanyList({ onSelectCompany }) {
     };
 
     fetchCompanies();
+    
   }, []);
 
   return (

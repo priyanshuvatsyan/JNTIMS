@@ -7,6 +7,59 @@
   color: #2F1919;
 }
 
+/* ===== Filters ===== */
+.filters {
+  background-color: #faf6f6;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #e8dede;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #2F1919;
+}
+
+.company-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.company-select {
+  padding: 8px 12px;
+  border: 1px solid #e8dede;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.company-select:focus {
+  outline: none;
+  border-color: #2F1919;
+}
+
+.stock-filters {
+  display: flex;
+  gap: 16px;
+}
+
+.stock-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 /* ===== Heading ===== */
 .all-stock-items h2 {
   font-size: 26px;
