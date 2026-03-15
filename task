@@ -1,0 +1,13 @@
+JNTIMS 1.0 Release 
+DONE add date in check paids 
+add double asks while deleting 
+
+JNTIMS 2.0 Release
+separate production and testing DB
+create ci-cd for sanity run
+dedicated notifications div instead of default html alert
+
+JNTIMS 3.0 Release
+UI Design
+Rewrite the entire codebase in a more modular and maintainable way
+Implement user authentication and authorization

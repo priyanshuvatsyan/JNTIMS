@@ -239,6 +239,7 @@ export default function PaymentsDetails({ companyId: propCompanyId }) {
             {payments.map(p => (
               <li key={p.id} className="payment-card">
                 <span>₹{p.amountPaid} — Check: {p.checkNumber}</span>
+                <span>{new Date(p.timestamp.toDate()).toLocaleDateString()}</span>
                 <div className="payment-actions">
                   <button className="delete-btn" onClick={() => handleDeletePayment(p.id)} disabled={loading}>Delete</button>
                   <button className="restore-btn" onClick={() => handleRestorePayment(p.id, p.amountPaid)} disabled={loading}>Restore</button>
