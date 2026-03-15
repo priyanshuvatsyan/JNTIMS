@@ -245,4 +245,67 @@ background: #432323;
 
 
 
+/* Delete Confirmation */
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-confirm-div {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.delete-confirm-div p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirm-buttons button {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.confirm-buttons button:first-child {
+  background: #dc3545;
+  color: #fff;
+}
+
+.confirm-buttons button:first-child:hover {
+  background: #c82333;
+}
+
+.confirm-buttons button:last-child {
+  background: #6c757d;
+  color: #fff;
+}
+
+.confirm-buttons button:last-child:hover {
+  background: #5a6268;
+}
+
 /* extra right space */

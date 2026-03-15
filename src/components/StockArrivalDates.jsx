@@ -29,6 +29,8 @@ export default function StockArrival() {
   const [loading, setLoading] = useState(true);
   const [addingDate, setAddingDate] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [dateToDelete, setDateToDelete] = useState(null);
 
   // 🔹 Fetch arrival dates + calculate amount from items
   const fetchArrivalDates = async () => {
@@ -104,11 +106,12 @@ const handleAddDate = async () => {
 
 
   // 🔹 Delete arrival date
-  const handleDelete = async (dateId) => {
+  const handleDelete = async () => {
+    if (!dateToDelete) return;
     try {
-      setDeletingId(dateId);
+      setDeletingId(dateToDelete);
       // First, delete all stockItems under this date
-      const itemsRef = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
+      const itemsRef = collection(db, `companies/${companyId}/arrivalDates/${dateToDelete}/stockItems`);
       const itemsSnapshot = await getDocs(itemsRef);
       const deleteItemsPromises = itemsSnapshot.docs.map(async (itemDoc) => {
         await deleteDoc(itemDoc.ref);
@@ -116,9 +119,11 @@ const handleAddDate = async () => {
       await Promise.all(deleteItemsPromises);
 
       // Then delete the date document
-      const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}`);
+      const ref = doc(db, `companies/${companyId}/arrivalDates/${dateToDelete}`);
       await deleteDoc(ref);
       fetchArrivalDates();
+      setShowDeleteConfirm(false);
+      setDateToDelete(null);
     } catch (err) {
       console.error('Error deleting record', err);
       alert('Failed to delete record');
@@ -231,7 +236,7 @@ const handleAddDate = async () => {
 
               <FaTrash
                 className="delete-icon"
-                onClick={() => handleDelete(date.id)}
+                onClick={() => { setDateToDelete(date.id); setShowDeleteConfirm(true); }}
                 style={{ opacity: deletingId === date.id ? 0.5 : 1 }}
               />
             </li>
@@ -275,6 +280,19 @@ const handleAddDate = async () => {
           </button>
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && (
+        <div className="delete-confirm-overlay">
+          <div className="delete-confirm-div">
+            <p>Are you sure you want to delete this arrival date and all its items?</p>
+            <div className="confirm-buttons">
+              <button onClick={handleDelete} disabled={deletingId !== null}>Yes, Delete</button>
+              <button onClick={() => { setShowDeleteConfirm(false); setDateToDelete(null); }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

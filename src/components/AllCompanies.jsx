@@ -32,6 +32,8 @@ export default function AllCompanies() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState(null);
 
 
   const fetchCompanies = async () => {
@@ -49,31 +51,34 @@ export default function AllCompanies() {
       setLoading(false);
     }
   }
-  const handleDelete = async (companyId) => {
-    console.log(`Starting delete for companyId: ${companyId}`);
-    const companyToDelete = companies.find(c => c.id === companyId);
-    console.log(`Found company to delete:`, companyToDelete);
+  const handleDelete = async () => {
+    if (!companyToDelete) return;
+    console.log(`Starting delete for companyId: ${companyToDelete}`);
+    const company = companies.find(c => c.id === companyToDelete);
+    console.log(`Found company to delete:`, company);
     // Optimistically remove from UI
-    setCompanies(prev => prev.filter(c => c.id !== companyId));
+    setCompanies(prev => prev.filter(c => c.id !== companyToDelete));
     try {
-      setDeletingId(companyId);
+      setDeletingId(companyToDelete);
       // Delete subcollections first
-      const paymentsRef = collection(db, 'companies', companyId, 'payments');
-      console.log(`Deleting payments for company: ${companyId}`);
+      const paymentsRef = collection(db, 'companies', companyToDelete, 'payments');
+      console.log(`Deleting payments for company: ${companyToDelete}`);
       await deleteCollection(paymentsRef);
 
-      const stockArrivalDatesRef = collection(db, 'companies', companyId, 'arrivalDates');
-      console.log(`Deleting arrivalDates for company: ${companyId}`);
+      const stockArrivalDatesRef = collection(db, 'companies', companyToDelete, 'arrivalDates');
+      console.log(`Deleting arrivalDates for company: ${companyToDelete}`);
       await deleteCollection(stockArrivalDatesRef);
 
       // Now delete the company document
-      console.log(`Deleting company document: companies/${companyId}`);
-      await deleteDoc(doc(db, 'companies', companyId));
+      console.log(`Deleting company document: companies/${companyToDelete}`);
+      await deleteDoc(doc(db, 'companies', companyToDelete));
       console.log('Company and all associated data deleted successfully from DB');
+      setShowDeleteConfirm(false);
+      setCompanyToDelete(null);
     } catch (error) {
       console.error('Error deleting company and data from DB:', error);
       // Revert the UI change if DB delete fails
-      setCompanies(prev => [...prev, companyToDelete]);
+      setCompanies(prev => [...prev, company]);
       alert('Failed to delete company and associated data from database. Please try again.');
     } finally {
       setDeletingId(null);
@@ -113,7 +118,8 @@ export default function AllCompanies() {
     className="delete-icon"
     onClick={(e) => {
       e.stopPropagation(); // Stop navigation
-      handleDelete(company.id);
+      setCompanyToDelete(company.id);
+      setShowDeleteConfirm(true);
     }}
   >
     {deletingId === company.id ? '⏳' : '🗑️'}
@@ -126,6 +132,19 @@ export default function AllCompanies() {
       <div className="add">
         <AddCompanies  onCompanyAdded={fetchCompanies}  />
       </div>
+
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && (
+        <div className="delete-confirm-overlay">
+          <div className="delete-confirm-div">
+            <p>Are you sure you want to delete this company and all its data?</p>
+            <div className="confirm-buttons">
+              <button onClick={handleDelete} disabled={deletingId !== null}>Yes, Delete</button>
+              <button onClick={() => { setShowDeleteConfirm(false); setCompanyToDelete(null); }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
