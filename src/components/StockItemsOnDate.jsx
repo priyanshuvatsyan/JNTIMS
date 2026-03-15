@@ -78,6 +78,8 @@ export default function StockItemsOnDate() {
   const [loading, setLoading] = useState(true);
   const [addingItem, setAddingItem] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
 
   // ===== FIREBASE OPERATIONS =====
@@ -201,11 +203,14 @@ export default function StockItemsOnDate() {
     }
   };
 
-  const handleDeleteItem = async (itemId) => {
+  const handleDeleteItem = async () => {
+    if (!itemToDelete) return;
     try {
-      const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemId}`);
+      const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemToDelete}`);
       await deleteDoc(ref);
       await fetchItems();
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
     } catch (err) {
       console.error('Error deleting item:', err);
     }
@@ -299,7 +304,7 @@ export default function StockItemsOnDate() {
                     </button>
                   </div>
 
-                  <button className="delete-btn" onClick={() => handleDeleteItem(item.id)}>Delete</button>
+                  <button className="delete-btn" onClick={() => { setItemToDelete(item.id); setShowDeleteConfirm(true); }}>Delete</button>
                 </div>
               )}
             </li>
@@ -364,6 +369,19 @@ export default function StockItemsOnDate() {
 
             <button className="save-product" onClick={handleAddItem}>Save</button>
             <button className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && (
+        <div className="delete-confirm-overlay">
+          <div className="delete-confirm-div">
+            <p>Are you sure you want to delete this item?</p>
+            <div className="confirm-buttons">
+              <button onClick={handleDeleteItem}>Yes, Delete</button>
+              <button onClick={() => { setShowDeleteConfirm(false); setItemToDelete(null); }}>Cancel</button>
+            </div>
           </div>
         </div>
       )}

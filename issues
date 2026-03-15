@@ -15,4 +15,6 @@
 
 8. (7)On site load add amounts are being calculated to comulativePaid(PaymentDetails.jsx)   
 
-9. fix all stock items page (sold) selling logic (something is wrong with sell button) and style
+9.  {done} fix all stock items page (sold) selling logic (something is wrong with sell button) and style
+
+10. check is manual amount and ckk details are being added in DB (something is not right there)

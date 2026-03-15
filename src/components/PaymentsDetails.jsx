@@ -30,6 +30,8 @@ export default function PaymentsDetails({ companyId: propCompanyId }) {
   const [showPaymentsDropdown, setShowPaymentsDropdown] = useState(true);
 
   const [loading, setLoading] = useState(false); // 🔹 global loading
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
 
   // Fetch company totals
   const fetchCompanyData = async () => {
@@ -109,12 +111,15 @@ export default function PaymentsDetails({ companyId: propCompanyId }) {
   };
 
   // Delete payment
-  const handleDeletePayment = async (paymentId) => {
+  const handleDeletePayment = async () => {
+    if (!paymentToDelete) return;
     setLoading(true);
     try {
-      const paymentRef = doc(db, `companies/${companyId}/payments`, paymentId);
+      const paymentRef = doc(db, `companies/${companyId}/payments`, paymentToDelete);
       await deleteDoc(paymentRef);
-      setPayments(prev => prev.filter(p => p.id !== paymentId));
+      setPayments(prev => prev.filter(p => p.id !== paymentToDelete));
+      setShowDeleteConfirm(false);
+      setPaymentToDelete(null);
     } catch (err) {
       console.error('Error deleting payment', err);
     } finally {
@@ -239,8 +244,9 @@ export default function PaymentsDetails({ companyId: propCompanyId }) {
             {payments.map(p => (
               <li key={p.id} className="payment-card">
                 <span>₹{p.amountPaid} — Check: {p.checkNumber}</span>
+                <span>{new Date(p.timestamp.toDate()).toLocaleDateString()}</span>
                 <div className="payment-actions">
-                  <button className="delete-btn" onClick={() => handleDeletePayment(p.id)} disabled={loading}>Delete</button>
+                  <button className="delete-btn" onClick={() => { setPaymentToDelete(p.id); setShowDeleteConfirm(true); }} disabled={loading}>Delete</button>
                   <button className="restore-btn" onClick={() => handleRestorePayment(p.id, p.amountPaid)} disabled={loading}>Restore</button>
                 </div>
               </li>
@@ -248,6 +254,19 @@ export default function PaymentsDetails({ companyId: propCompanyId }) {
           </ul>
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && (
+        <div className="delete-confirm-overlay">
+          <div className="delete-confirm-div">
+            <p>Are you sure you want to delete this payment?</p>
+            <div className="confirm-buttons">
+              <button onClick={handleDeletePayment} disabled={loading}>Yes, Delete</button>
+              <button onClick={() => { setShowDeleteConfirm(false); setPaymentToDelete(null); }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
