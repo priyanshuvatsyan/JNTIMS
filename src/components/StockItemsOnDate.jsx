@@ -118,7 +118,6 @@ export default function StockItemsOnDate() {
     const perUnitWithGst = totalCostWithGst / totalUnits;
 
     try {
-      setAddingItem(true);
       const ref = collection(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems`);
       await addDoc(ref, {
         name,
@@ -143,8 +142,6 @@ export default function StockItemsOnDate() {
       await fetchItems();
     } catch (err) {
       console.error('Error adding item:', err);
-    } finally {
-      setAddingItem(false);
     }
   };
 
@@ -206,14 +203,11 @@ export default function StockItemsOnDate() {
 
   const handleDeleteItem = async (itemId) => {
     try {
-      setDeletingId(itemId);
       const ref = doc(db, `companies/${companyId}/arrivalDates/${dateId}/stockItems/${itemId}`);
       await deleteDoc(ref);
       await fetchItems();
     } catch (err) {
       console.error('Error deleting item:', err);
-    } finally {
-      setDeletingId(null);
     }
   };
 
