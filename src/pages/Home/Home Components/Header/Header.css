@@ -1,0 +1,55 @@
+.header {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  position: relative;
+}
+
+/* LEFT SIDE */
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header img {
+  height: 50px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+}
+
+.title h3 {
+  margin: 0;
+}
+
+.title p {
+  margin: 0;
+  font-size: 12px;
+  color: gray;
+}
+
+/* RIGHT SIDE (NOTIFICATION) */
+.notification {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  cursor: pointer;
+}
+
+.bell-icon {
+  font-size: 22px;
+  color: gray;
+}
+
+.dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: red;
+  border-radius: 50%;
+}

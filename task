@@ -1,6 +1,6 @@
 JNTIMS 1.0 Release 
 DONE add date in check paids 
-add double asks while deleting 
+DONE add double asks while deleting 
 
 JNTIMS 2.0 Release
 separate production and testing DB

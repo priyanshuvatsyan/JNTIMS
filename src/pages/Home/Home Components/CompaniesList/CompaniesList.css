@@ -1,0 +1,144 @@
+/* ===== HEADING ===== */
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 0 15px;
+  font-size: 18px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.company-icon {
+  font-size: 18px;
+  color: #757575;
+}
+
+.heading-count {
+  font-size: 15px;
+  color: #757575;
+}
+
+
+/* ===== COMPANY CARD ===== */
+.company-card {
+  margin: 10px 15px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f5f6f8;
+}
+
+
+/* ===== TOP SECTION (INFO ROW) ===== */
+.companyinfo {
+  display: flex;
+  align-items: center;
+}
+
+
+/* LEFT ICON (INITIALS) */
+.companyinfo-left {
+  width: 40px;
+  height: 40px;
+  background: #7facff8c;
+  color: rgb(11, 15, 255);
+  border-radius: 35%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+
+/* MIDDLE TEXT */
+.companyinfo-middle {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.companyinfo-middle h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.companyinfo-middle p {
+  margin: 0;
+  font-size: 12px;
+  color: #198044;
+  background-color: #008f3b1a;
+padding: 2px 6px;
+width: fit-content;
+margin-top: 5px;
+border-radius: 4px;
+font-weight: bold;
+
+}
+
+
+/* RIGHT DROPDOWN */
+.companyinfo-right {
+  margin-left: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+
+/* ===== PAYMENT SECTION ===== */
+.paymentinfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 25px;
+}
+
+.paymentinfo-left p {
+  margin: 0;
+  font-size: 12px;
+  color: #757575;
+}
+
+.paymentinfo-left h3 {
+  margin: 0;
+  font-size: 17px;
+  color: rgb(218, 0, 0);
+  font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.paymentinfo-right {
+  background: #0259fa;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+
+/* ===== DROPDOWN SECTION ===== */
+.dropdown-click {
+    display: flex;
+  align-items: center;
+  justify-content: space-between;;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #555;
+}
+.dropdown-click button {
+  color: #ff4d4d;
+  background: none;
+  border: none;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.dropdown-item p{
+  margin: 0;
+  font-size: 12px;
+  color: #757575;
+}
+.dropdown-item h3{
+  margin: 0;
+  font-size: 15px; 
+  font-weight: 600;
+}

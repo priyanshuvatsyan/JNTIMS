@@ -1,0 +1,101 @@
+.crousal {
+  background: linear-gradient(135deg, #0059ff, #003bb5);
+  color: white;
+  padding: 15px;
+  padding-bottom: 35px;
+  border-radius: 12px;
+}
+
+/* GREETING */
+.greet {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-left: 10px;
+}
+
+.greet p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.greet h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.date {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* GRID LAYOUT */
+.stock-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 cards per row */
+  gap: 12px;
+  margin-top: 15px;
+}
+
+/* CARD */
+.info-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 10px;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+
+/* ICON */
+.info-left {
+  font-size: 18px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* TEXT */
+.info-right p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.info-right h3 {
+  margin: 0;
+  font-size: 14px;
+}
+/* ICON BASE */
+.info-left {
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* COLORS */
+.blue {
+  background: rgba(0, 123, 255, 0.2);
+  color: #4da3ff;
+}
+
+.green {
+  background: rgba(40, 167, 69, 0.2);
+  color: #4cd964;
+}
+
+.purple {
+  background: rgba(111, 66, 193, 0.2);
+  color: #b084f5;
+}
+
+.orange {
+  background: rgba(255, 159, 64, 0.2);
+  color: #ffb74d;
+}
