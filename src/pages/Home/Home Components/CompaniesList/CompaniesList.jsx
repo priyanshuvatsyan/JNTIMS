@@ -11,6 +11,11 @@ export default function CompaniesList() {
         { id: 1, name: "Tata", balancePayable: "156655", lastStockAdded: "2024-06-01", payments: 2, totalPurchases: 50000 },
         { id: 2, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
         { id: 3, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
+          { id: 4, name: "Tata", balancePayable: "156655", lastStockAdded: "2024-06-01", payments: 2, totalPurchases: 50000 },
+        { id: 5, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
+        { id: 6, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },  
+        { id: 7, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
+        { id: 8, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
     ];
 
     const getDaysAgo = (dateString) => {

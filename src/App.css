@@ -11,3 +11,6 @@ input, textarea {
   -webkit-user-select: text;
   -ms-user-select: text;
 }
+body {
+  font-family: 'Quicksand', sans-serif;
+}

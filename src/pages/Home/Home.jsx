@@ -5,6 +5,7 @@ import Header from './Home Components/Header/Header';
 import Crousal from './Home Components/Crousal/Crousal';
 import Search from './Home Components/Search/Search';
 import CompaniesList from './Home Components/CompaniesList/CompaniesList';
+import Nav from '../../components/Nav/Nav';
 
 export default function Home() {
 
@@ -16,6 +17,7 @@ export default function Home() {
       <Crousal />
       <Search setSearchTerm={setSearchTerm} />
       <CompaniesList searchTerm={searchTerm} />
+
     </div>
   );
 }
