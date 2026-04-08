@@ -5,15 +5,16 @@ import './CompaniesList.css';
 
 export default function CompaniesList() {
 
-    const [openId, setOpenId] = useState(null); // 🔥 NEW
+    const [openId, setOpenId] = useState(null);
+   const [deleteCompanyId, setDeleteCompanyId] = useState(null);
 
     const companies = [
         { id: 1, name: "Tata", balancePayable: "156655", lastStockAdded: "2024-06-01", payments: 2, totalPurchases: 50000 },
         { id: 2, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
         { id: 3, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
-          { id: 4, name: "Tata", balancePayable: "156655", lastStockAdded: "2024-06-01", payments: 2, totalPurchases: 50000 },
+        { id: 4, name: "Tata", balancePayable: "156655", lastStockAdded: "2024-06-01", payments: 2, totalPurchases: 50000 },
         { id: 5, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
-        { id: 6, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },  
+        { id: 6, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
         { id: 7, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
         { id: 8, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
     ];
@@ -31,6 +32,11 @@ export default function CompaniesList() {
 
         return stockDate.toLocaleDateString();
     };
+
+    const handleDelete = (companyId) => {
+    setDeleteCompanyId(companyId);
+};
+
 
     return (
         <div className="companies-list">
@@ -105,7 +111,12 @@ export default function CompaniesList() {
                                         <h3>{company.payments}</h3>
                                     </div>
 
-                                    <button className="delete-btn">Delete</button>
+                                    <button
+                                        className="delete-btn"
+                                        onClick={() => handleDelete(company.id)}
+                                    >
+                                        Delete
+                                    </button>
 
                                 </div>
                             )}
@@ -113,8 +124,40 @@ export default function CompaniesList() {
                         </div>
                     );
                 })}
+ {deleteCompanyId && (
+                <>
+                    <div
+                        className="delete-overlay"
+                        onClick={() => setDeleteCompanyId(null)}
+                    ></div>
 
+                    <div className="delete-modal">
+                        <h3>Delete Company</h3>
+                        <p>Are you sure you want to delete this company?</p>
+
+                        <div className="delete-actions">
+                            <button
+                                className="cancel-btn"
+                                onClick={() => setDeleteCompanyId(null)}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                className="confirm-delete-btn"
+                                onClick={() => {
+                                    console.log("Deleted:", deleteCompanyId);
+                                    setDeleteCompanyId(null);
+                                }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
             </div>
+           
         </div>
     );
 }

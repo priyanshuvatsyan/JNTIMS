@@ -34,6 +34,7 @@ vite@^6.3.5
 # To set up on a new laptop:
 # 1. Install Node.js from https://nodejs.org/
 # 2. Clone the repository: git clone <repo-url>
-# 3. Navigate to the project folder: cd JNTIMS
+# 3. Navigate to the project fol
+der: cd JNTIMS
 # 4. Install dependencies: npm install
 # 5. Start development server: npm run dev

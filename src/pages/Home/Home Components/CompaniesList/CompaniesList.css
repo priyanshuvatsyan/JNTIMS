@@ -146,3 +146,59 @@ font-weight: bold;
 .companies-table{
     margin-bottom: 100px;
 }
+/* Overlay */
+.delete-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5); /* slightly darker looks better */
+  z-index: 999;
+}
+
+/* Modal */
+.delete-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 💡 centers perfectly */
+
+  width: 90%;
+  max-width: 400px;
+
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  z-index: 1000;
+  text-align: center;
+
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+/* Buttons */
+.delete-actions {
+  display: flex;
+  gap: 10px; /* better than margin tricks */
+  margin-top: 15px;
+}
+
+.cancel-btn {
+  flex: 1;
+  margin-right: 10px;
+  padding: 10px;
+  border: none;
+  background: #eee;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.confirm-delete-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #ff4d4d;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
