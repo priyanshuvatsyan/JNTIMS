@@ -23,3 +23,10 @@ export default function Home() {
   );
 }
 
+// naxt steps:
+// 1. Create DB apis atleast for home page
+// 2. Implement search functionality in home page
+// 3. Implement add company functionality with backend integration
+// 4. Implement delete company functionality with backend integration
+// 5. Implement edit company functionality with backend integration
+// 6. put actual data in crousal
