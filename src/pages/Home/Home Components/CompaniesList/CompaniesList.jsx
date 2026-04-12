@@ -1,23 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaBuilding } from "react-icons/fa";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import './CompaniesList.css';
+import { getCompanies, deleteCompany } from '../../../../Database/apis';
 
-export default function CompaniesList() {
-
+export default function CompaniesList({ searchTerm }) {
     const [openId, setOpenId] = useState(null);
-   const [deleteCompanyId, setDeleteCompanyId] = useState(null);
+    const [deleteCompanyId, setDeleteCompanyId] = useState(null);
+    const [companies, setCompanies] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const companies = [
-        { id: 1, name: "Tata", balancePayable: "156655", lastStockAdded: "2024-06-01", payments: 2, totalPurchases: 50000 },
-        { id: 2, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
-        { id: 3, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
-        { id: 4, name: "Tata", balancePayable: "156655", lastStockAdded: "2024-06-01", payments: 2, totalPurchases: 50000 },
-        { id: 5, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
-        { id: 6, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
-        { id: 7, name: "Reliance", balancePayable: "200000", lastStockAdded: "2024-06-02", payments: 1, totalPurchases: 30000 },
-        { id: 8, name: "Infosys", balancePayable: "180000", lastStockAdded: "2024-06-03", payments: 3, totalPurchases: 70000 },
-    ];
+    useEffect(() => {
+        fetchCompanies();
+    }, []);
+
+    const fetchCompanies = async () => {
+        try {
+            setLoading(true);
+            const data = await getCompanies();
+            setCompanies(data);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to fetch companies:', err);
+            setError('Failed to load companies');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteCompanyId) return;
+
+        try {
+            await deleteCompany(deleteCompanyId);
+            setCompanies(companies.filter(company => company.id !== deleteCompanyId));
+            setDeleteCompanyId(null);
+        } catch (err) {
+            console.error('Failed to delete company:', err);
+            setError('Failed to delete company');
+        }
+    };
+
+    const filteredCompanies = companies.filter(company =>
+        company.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const getDaysAgo = (dateString) => {
         const today = new Date();
@@ -33,32 +60,45 @@ export default function CompaniesList() {
         return stockDate.toLocaleDateString();
     };
 
-    const handleDelete = (companyId) => {
-    setDeleteCompanyId(companyId);
-};
+    if (loading) {
+        return (
+            <div className="companies-list">
+                <div className="heading">
+                    <FaBuilding className="company-icon" />
+                    <p>Companies</p>
+                    <p>Loading...</p>
+                </div>
+            </div>
+        );
+    }
 
+    if (error) {
+        return (
+            <div className="companies-list">
+                <div className="heading">
+                    <FaBuilding className="company-icon" />
+                    <p>Companies</p>
+                    <p>Error: {error}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="companies-list">
-
             <div className="heading">
                 <FaBuilding className="company-icon" />
                 <p>Companies</p>
-                <p>{companies.length}</p>
+                <p>{filteredCompanies.length}</p>
             </div>
 
             <div className="companies-table">
-
-                {companies.map((company) => {
-
-                    const isOpen = openId === company.id; // 🔥 NEW
+                {filteredCompanies.map((company) => {
+                    const isOpen = openId === company.id;
 
                     return (
                         <div key={company.id} className="company-card">
-
                             <div className="companyinfo">
-
-                                {/* LEFT ICON */}
                                 <div className="companyinfo-left">
                                     {company.name
                                         .split(" ")
@@ -68,13 +108,11 @@ export default function CompaniesList() {
                                         .slice(0, 2)}
                                 </div>
 
-                                {/* MIDDLE */}
                                 <div className="companyinfo-middle">
                                     <h4>{company.name}</h4>
-                                    <p>Last: {getDaysAgo(company.lastStockAdded)}</p>
+                                    <p>Last: {company.createdAt ? getDaysAgo(company.createdAt.toDate().toISOString().split('T')[0]) : 'N/A'}</p>
                                 </div>
 
-                                {/* RIGHT DROPDOWN */}
                                 <div
                                     className="companyinfo-right"
                                     onClick={() =>
@@ -83,13 +121,12 @@ export default function CompaniesList() {
                                 >
                                     {isOpen ? <FiChevronDown /> : <FiChevronRight />}
                                 </div>
-
                             </div>
 
                             <div className="paymentinfo">
                                 <div className="paymentinfo-left">
                                     <p>Balance Payable</p>
-                                    <h3>₹ {company.balancePayable}</h3>
+                                    <h3>₹ {company.balancePayable || '0'}</h3>
                                 </div>
 
                                 <div className="paymentinfo-right">
@@ -97,34 +134,32 @@ export default function CompaniesList() {
                                 </div>
                             </div>
 
-
                             {isOpen && (
                                 <div className="dropdown-click">
-
                                     <div className="dropdown-item">
                                         <p>Total Purchases</p>
-                                        <h3>₹ {company.totalPurchases}</h3>
+                                        <h3>₹ {company.totalPurchases || '0'}</h3>
                                     </div>
 
                                     <div className="dropdown-item">
                                         <p>Payments</p>
-                                        <h3>{company.payments}</h3>
+                                        <h3>{company.payments || '0'}</h3>
                                     </div>
 
                                     <button
                                         className="delete-btn"
-                                        onClick={() => handleDelete(company.id)}
+                                        onClick={() => setDeleteCompanyId(company.id)}
                                     >
                                         Delete
                                     </button>
-
                                 </div>
                             )}
-
                         </div>
                     );
                 })}
- {deleteCompanyId && (
+            </div>
+
+            {deleteCompanyId && (
                 <>
                     <div
                         className="delete-overlay"
@@ -145,10 +180,7 @@ export default function CompaniesList() {
 
                             <button
                                 className="confirm-delete-btn"
-                                onClick={() => {
-                                    console.log("Deleted:", deleteCompanyId);
-                                    setDeleteCompanyId(null);
-                                }}
+                                onClick={handleDelete}
                             >
                                 Delete
                             </button>
@@ -156,8 +188,6 @@ export default function CompaniesList() {
                     </div>
                 </>
             )}
-            </div>
-           
         </div>
     );
 }

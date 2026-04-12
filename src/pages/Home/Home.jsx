@@ -14,7 +14,7 @@ export default function Home() {
 
   return (
     <div className="home-container">
-      <Header />
+      
       <Crousal />
       <Search setSearchTerm={setSearchTerm} />
       <CompaniesList searchTerm={searchTerm} />
