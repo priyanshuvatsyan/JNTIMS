@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { FiPlus } from 'react-icons/fi';
-import './AddCompany.css';
+import { FiPlus, FiPackage, FiCalendar } from 'react-icons/fi';
 import { addCompany } from '../../../../Database/apis';
 
-export default function AddCompany() {
+import './AddStock.css';
 
-  
-  const [open, setOpen] = useState(false);
+
+export default function AddStock() {
+  const [showOptions, setShowOptions] = useState(false);
+  const [showStockDialog, setShowStockDialog] = useState(false);
+  const [showDateDialog, setShowDateDialog] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,7 +38,7 @@ export default function AddCompany() {
       });
 
       resetForm();
-      setOpen(false);
+      setShowStockDialog(false);
       setMessage('Company added successfully');
     } catch (error) {
       console.error('Failed to add company:', error);
@@ -46,19 +48,35 @@ export default function AddCompany() {
     }
   };
 
+  const closeAll = () => {
+    setShowOptions(false);
+    setShowStockDialog(false);
+    setShowDateDialog(false);
+    resetForm();
+  };
+
   return (
     <>
       <div className="addcompany-container">
-        <div className="btn" onClick={() => setOpen(true)}>
+        <div className={`btn ${showOptions ? 'open' : ''}`} onClick={() => setShowOptions(!showOptions)}>
           <FiPlus size={24} />
         </div>
       </div>
 
-      {open && <div className="overlay" onClick={() => setOpen(false)}></div>}
+      <div className={`options-menu ${showOptions ? 'open' : ''}`}>
+        <button className="option-btn" onClick={() => { setShowOptions(false); setShowDateDialog(true); }}>
+          <FiCalendar size={17} />
+        </button>
+        <button className="option-btn" onClick={() => { setShowOptions(false); setShowStockDialog(true); }}>
+          <FiPackage size={17} />
+        </button>
+      </div>
 
-      <div className={`bottom-sheet ${open ? 'open' : ''}`}>
+      {(showStockDialog || showDateDialog) && <div className="overlay" onClick={closeAll}></div>}
+
+      <div className={`bottom-sheet ${showStockDialog ? 'open' : ''}`}>
         <div className="drag-bar"></div>
-        <h2>Add Company</h2>
+        <h2>Add Stock</h2>
 
         <form onSubmit={handleSubmit}>
           <label>Company Name *</label>
@@ -82,10 +100,25 @@ export default function AddCompany() {
           {message && <p className="form-message">{message}</p>}
 
           <button className="submit-btn" type="submit" disabled={loading}>
-            {loading ? 'Adding...' : 'Add Company'}
+            {loading ? 'Adding...' : 'Add Stock'}
+          </button>
+        </form>
+      </div>
+
+      <div className={`bottom-sheet ${showDateDialog ? 'open' : ''}`}>
+        <div className="drag-bar"></div>
+        <h2>Add Date</h2>
+
+        <form>
+          <label>Select Date</label>
+          <input type="date" />
+
+          <button className="submit-btn" type="submit">
+            Add Date
           </button>
         </form>
       </div>
     </>
   );
 }
+
