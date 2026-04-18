@@ -3,8 +3,10 @@
  * This module provides CRUD operations for the 'companies' collection in Firestore.
  */
 
-import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, serverTimestamp,query, where } from "firebase/firestore";
 import { db } from "../../firebase.js";
+
+
 
 // Reference to the 'companies' collection in Firestore
 const companiesCollection = collection(db, "companies");
@@ -17,7 +19,7 @@ const companiesCollection = collection(db, "companies");
  * @returns {Promise<Object>} A promise that resolves to the added company object with its ID.
  * @throws {Error} If the company name is missing or invalid.
  */
-export async function addCompany(company) {
+export async function addCompany(company) { 
   if (!company?.name?.trim()) {
     throw new Error("Company name is required");
   }
@@ -68,4 +70,71 @@ export async function updateCompany(companyId, data) {
 
   const companyDoc = doc(db, "companies", companyId);
   await updateDoc(companyDoc, data);
+}
+
+
+const stockArrivalDateCollection = collection(db, "stockArrivalDate");
+
+export async function addStockArrivalDate(data) {
+  const { companyId, amount, arrivalDate } = data;
+
+  if (!companyId) throw new Error("Company ID is required");
+  if (!arrivalDate) throw new Error("Arrival date is required");
+  if (!amount || amount <= 0) throw new Error("Valid amount is required");
+
+  const newEntry = {
+    companyId,
+    amount: Number(amount),
+    arrivalDate: new Date(arrivalDate), // convert from input
+    createdAt: serverTimestamp(),
+  };
+
+  const docRef = await addDoc(stockArrivalDateCollection, newEntry);
+
+  return {
+    id: docRef.id,
+    ...newEntry,
+  };
+}
+
+export async function getStockArrivalDate(companyId) {
+  if (!companyId) throw new Error("Company ID is required");
+
+  const q = query(
+    stockArrivalDateCollection,
+    where("companyId", "==", companyId)
+  );
+
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+}
+
+export async function editStockArrivalDate(entryId, data) {
+  if (!entryId) throw new Error("Entry ID is required");
+
+  const entryDoc = doc(db, "stockArrivalDate", entryId);
+
+  const updatedData = {};
+
+  if (data.amount !== undefined) {
+    if (data.amount <= 0) throw new Error("Amount must be > 0");
+    updatedData.amount = Number(data.amount);
+  }
+
+  if (data.arrivalDate) {
+    updatedData.arrivalDate = new Date(data.arrivalDate);
+  }
+
+  await updateDoc(entryDoc, updatedData);
+}
+
+export async function deleteStockArrivalDate(entryId) {
+  if (!entryId) throw new Error("Entry ID is required");
+
+  const entryDoc = doc(db, "stockArrivalDate", entryId);
+  await deleteDoc(entryDoc);
 }
