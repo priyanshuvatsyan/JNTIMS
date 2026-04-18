@@ -276,6 +276,19 @@ export default function AddStock() {
         <h2>Add Date</h2>
 
         <form>
+
+          <label>Company *</label>
+              <select
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                disabled={loading}
+              >
+                <option value="">Select</option>
+                {companies.map((company) => (
+                  <option key={company} value={company}>{company}</option>
+                ))}
+              </select>
+
           <label>Select Date</label>
           <input type="date"
             value={stockDate}

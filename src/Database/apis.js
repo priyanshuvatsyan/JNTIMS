@@ -97,7 +97,18 @@ export async function addStockArrivalDate(data) {
   };
 }
 
-export async function getStockArrivalDate(companyId) {
+// 🔹 1. General (all data)
+export async function getAllStockArrivalDates() {
+  const snapshot = await getDocs(stockArrivalDateCollection);
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+}
+
+// 🔹 2. Filtered (by company)
+export async function getStockArrivalDate_basedOnCompany(companyId) {
   if (!companyId) throw new Error("Company ID is required");
 
   const q = query(
@@ -137,4 +148,154 @@ export async function deleteStockArrivalDate(entryId) {
 
   const entryDoc = doc(db, "stockArrivalDate", entryId);
   await deleteDoc(entryDoc);
+}
+
+
+import { addDoc, getDocs, deleteDoc, updateDoc, doc, serverTimestamp, query, where } from "firebase/firestore";
+import { db } from "../../firebase.js";
+
+const stockDataCollection = collection(db, "stockData");
+
+export async function addStock(data) {
+  const {
+    companyId,
+    entryId,
+    productName,
+    boxes,
+    unitsPerBox,
+    boxPriceWithoutGst,
+    boxPriceWithGst,        // coming from UI
+    unitPriceWithoutGst,    // coming from UI
+    unitPriceWithGst,       // coming from UI
+    sellingPrice,
+    gst
+  } = data;
+
+  // 🔒 Basic validation
+  if (!companyId) throw new Error("Company ID required");
+  if (!entryId) throw new Error("Entry ID required");
+  if (!productName?.trim()) throw new Error("Product name required");
+
+  if (!boxes || boxes <= 0) throw new Error("Boxes must be > 0");
+  if (!unitsPerBox || unitsPerBox <= 0) throw new Error("Units per box must be > 0");
+  if (!boxPriceWithoutGst || boxPriceWithoutGst <= 0) throw new Error("Invalid box price");
+
+  // 🔢 Convert to numbers
+  const boxesNum = Number(boxes);
+  const unitsPerBoxNum = Number(unitsPerBox);
+  const boxPriceNum = Number(boxPriceWithoutGst);
+  const gstNum = Number(gst || 0);
+
+  const totalUnits = boxesNum * unitsPerBoxNum;
+
+  // 🧠 Recompute expected values (SOURCE OF TRUTH)
+  const expectedBoxPriceWithGst =
+    boxPriceNum + (boxPriceNum * gstNum) / 100;
+
+  const expectedUnitPriceWithoutGst =
+    boxPriceNum / unitsPerBoxNum;
+
+  const expectedUnitPriceWithGst =
+    expectedBoxPriceWithGst / unitsPerBoxNum;
+
+  // 🔍 Optional validation check (for debugging/logging)
+  const isClose = (a, b) => Math.abs(a - b) < 0.01;
+
+  if (
+    !isClose(boxPriceWithGst, expectedBoxPriceWithGst) ||
+    !isClose(unitPriceWithoutGst, expectedUnitPriceWithoutGst) ||
+    !isClose(unitPriceWithGst, expectedUnitPriceWithGst)
+  ) {
+    console.warn("⚠️ UI calculation mismatch — overriding with backend values");
+  }
+
+  // ✅ FINAL DATA (always use backend computed values)
+  const newStock = {
+    companyId,
+    entryId,
+
+    productName: productName.trim(),
+
+    boxes: boxesNum,
+    unitsPerBox: unitsPerBoxNum,
+    totalUnits,
+
+    boxPriceWithoutGst: boxPriceNum,
+    boxPriceWithGst: expectedBoxPriceWithGst,
+
+    unitPriceWithoutGst: expectedUnitPriceWithoutGst,
+    unitPriceWithGst: expectedUnitPriceWithGst,
+
+    sellingPrice: Number(sellingPrice),
+    gst: gstNum,
+
+    remainingQty: totalUnits,
+
+    createdAt: serverTimestamp()
+  };
+
+  const docRef = await addDoc(stockDataCollection, newStock);
+
+  return {
+    id: docRef.id,
+    ...newStock
+  };
+}
+
+export async function getAllStock() {
+  const snapshot = await getDocs(stockDataCollection);
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+}
+
+//Get Stock by Company (very important)
+export async function getStockByCompany(companyId) {
+  if (!companyId) throw new Error("Company ID required");
+
+  const q = query(
+    stockDataCollection,
+    where("companyId", "==", companyId)
+  );
+
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+}
+
+//Get Stock by Entry (date)
+export async function getStockByEntry(entryId) {
+  if (!entryId) throw new Error("Entry ID required");
+
+  const q = query(
+    stockDataCollection,
+    where("entryId", "==", entryId)
+  );
+
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+}
+
+export async function updateStock(stockId, data) {
+  if (!stockId) throw new Error("Stock ID required");
+
+  const stockDoc = doc(db, "stockData", stockId);
+  await updateDoc(stockDoc, data);
+}
+
+
+export async function deleteStock(stockId) {
+  if (!stockId) throw new Error("Stock ID required");
+
+  const stockDoc = doc(db, "stockData", stockId);
+  await deleteDoc(stockDoc);
 }
