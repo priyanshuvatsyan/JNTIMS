@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPlus, FiPackage, FiCalendar } from 'react-icons/fi';
-import { addCompany } from '../../../../Database/apis';
+import { 
+  getCompanies, 
+  addStockArrivalDate, 
+  getStockArrivalDate_basedOnCompany,
+  addStock
+} from '../../../../Database/apis';
 
 import './AddStock.css';
 
@@ -10,17 +15,19 @@ export default function AddStock() {
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [showDateDialog, setShowDateDialog] = useState(false);
 
-  //add stock arrival date
-  const [companyName, setCompanyName] = useState('');
-  const [stockAmount, setStockAmount] = useState('');
-  const [stockDate, setStockDate] = useState('');
-  const [companies] = useState([
-    'Tech Distributors Inc',
-    'Global Supplies',
-    'Alpha Traders',
-  ]);
+  // Companies & Stock Arrival Dates from Firebase
+  const [companies, setCompanies] = useState([]);
+  const [stockDates, setStockDates] = useState([]);
+  const [companiesLoading, setCompaniesLoading] = useState(false);
 
-  //add stock data
+  //add stock arrival date dialog state
+  const [dateCompanyName, setDateCompanyName] = useState('');
+  const [arrivalDate, setArrivalDate] = useState('');
+  const [dateAmount, setDateAmount] = useState('');
+
+  //add stock dialog state
+  const [companyName, setCompanyName] = useState('');
+  const [stockDateId, setStockDateId] = useState('');
   const [productName, setProductName] = useState('');
   const [boxes, setBoxes] = useState('');
   const [unitsPerBox, setUnitsPerBox] = useState('');
@@ -31,10 +38,74 @@ export default function AddStock() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const resetForm = () => {
+  // Fetch companies on component mount
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  // Log companies
+  useEffect(() => {
+    console.log('Companies state:', companies);
+  }, [companies]);
+
+  // Log stockDates for debugging
+  useEffect(() => {
+    console.log('Stock dates loaded:', stockDates);
+  }, [stockDates]);
+
+  // Log companyName
+  useEffect(() => {
+    console.log('CompanyName state:', companyName);
+  }, [companyName]);
+
+  const fetchCompanies = async () => {
+    try {
+      setCompaniesLoading(true);
+      console.log('Starting fetchCompanies...');
+      const companiesList = await getCompanies();
+      console.log('✅ Companies fetched successfully:', companiesList);
+      setCompanies(companiesList);
+    } catch (error) {
+      console.error('❌ Error fetching companies:', error);
+      setMessage('Failed to load companies');
+    } finally {
+      setCompaniesLoading(false);
+    }
+  };
+
+  // Fetch stock arrival dates for selected company
+  const fetchStockDates = async (companyId) => {
+    try {
+      if (companyId) {
+        console.log('Fetching stock dates for company:', companyId);
+        const dates = await getStockArrivalDate_basedOnCompany(companyId);
+        console.log('Fetched dates:', dates);
+        setStockDates(dates);
+      } else {
+        setStockDates([]);
+      }
+    } catch (error) {
+      console.error('Error fetching stock dates:', error);
+      setMessage('Failed to load stock dates');
+      setStockDates([]);
+    }
+  };
+
+  const handleCompanySelect = (e) => {
+    const selectedId = e.target.value;
+    console.log('Company selected:', selectedId);
+    setCompanyName(selectedId);
+    setStockDateId('');
+    const selectedCompany = companies.find(c => c.id === selectedId);
+    console.log('Selected company object:', selectedCompany);
+    if (selectedCompany) {
+      fetchStockDates(selectedCompany.id);
+    }
+  };
+
+  const resetStockForm = () => {
     setCompanyName('');
-    setStockAmount('');
-    setStockDate('');
+    setStockDateId('');
     setProductName('');
     setBoxes('');
     setUnitsPerBox('');
@@ -44,6 +115,14 @@ export default function AddStock() {
     setMessage('');
   };
 
+  const resetDateForm = () => {
+    setDateCompanyName('');
+    setArrivalDate('');
+    setDateAmount('');
+    setMessage('');
+  };
+
+  // UI Calculations (for display only)
   const totalUnits = boxes && unitsPerBox ? Number(boxes) * Number(unitsPerBox) : 0;
   const boxPrice = Number(boxPriceWithoutGst) || 0;
   const gstRate = Number(gstPercentage) || 0;
@@ -51,11 +130,68 @@ export default function AddStock() {
   const perUnitPriceNoGst = Number(unitsPerBox) > 0 ? boxPrice / Number(unitsPerBox) : 0;
   const perUnitPriceWithGst = Number(unitsPerBox) > 0 ? boxPriceWithGst / Number(unitsPerBox) : 0;
 
-  const handleSubmit = async (event) => {
+  // Handle Adding Stock Arrival Date
+  const handleAddDate = async (event) => {
     event.preventDefault();
+    setMessage('');
+
+    if (!dateCompanyName.trim()) {
+      setMessage('Company is required');
+      return;
+    }
+
+    if (!arrivalDate) {
+      setMessage('Arrival date is required');
+      return;
+    }
+
+    if (!dateAmount || dateAmount <= 0) {
+      setMessage('Amount must be greater than 0');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const selectedCompany = companies.find(c => c.id === dateCompanyName);
+      if (!selectedCompany) throw new Error('Company not found');
+
+      await addStockArrivalDate({
+        companyId: selectedCompany.id,
+        amount: Number(dateAmount),
+        arrivalDate: arrivalDate
+      });
+
+      setMessage('Stock arrival date added successfully!');
+      resetDateForm();
+      
+      // Refresh stock dates
+      await fetchStockDates(selectedCompany.id);
+      
+      setTimeout(() => {
+        setShowDateDialog(false);
+        setMessage('');
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to add stock arrival date:', error);
+      setMessage(error.message || 'Failed to add stock arrival date. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Adding Stock
+  const handleAddStock = async (event) => {
+    event.preventDefault();
+    setMessage('');
 
     if (!companyName.trim()) {
-      setMessage('Company name is required');
+      setMessage('Company is required');
+      return;
+    }
+
+    if (!stockDateId.trim()) {
+      setMessage('Stock arrival date is required');
       return;
     }
 
@@ -74,13 +210,8 @@ export default function AddStock() {
       return;
     }
 
-    if (!sellingPrice || sellingPrice <= 0) {
-      setMessage('Selling price is required and must be greater than 0');
-      return;
-    }
-
     if (!boxPriceWithoutGst || boxPriceWithoutGst <= 0) {
-      setMessage('Box price without GST is required and must be greater than 0');
+      setMessage('Box price is required and must be greater than 0');
       return;
     }
 
@@ -89,25 +220,38 @@ export default function AddStock() {
       return;
     }
 
-    if (!stockDate) {
-      setMessage('Stock date is required');
+    if (!sellingPrice || sellingPrice <= 0) {
+      setMessage('Selling price is required and must be greater than 0');
       return;
     }
 
     setLoading(true);
-    setMessage('');
 
     try {
-      await addCompany({
-        name: companyName,
+      await addStock({
+        companyId: companyName,
+        entryId: stockDateId,
+        productName,
+        boxes: Number(boxes),
+        unitsPerBox: Number(unitsPerBox),
+        boxPriceWithoutGst: Number(boxPriceWithoutGst),
+        boxPriceWithGst,
+        unitPriceWithoutGst: perUnitPriceNoGst,
+        unitPriceWithGst: perUnitPriceWithGst,
+        sellingPrice: Number(sellingPrice),
+        gst: Number(gstPercentage)
       });
 
-      resetForm();
-      setShowStockDialog(false);
-      setMessage('Company added successfully');
+      setMessage('Stock added successfully!');
+      resetStockForm();
+      
+      setTimeout(() => {
+        setShowStockDialog(false);
+        setMessage('');
+      }, 2000);
     } catch (error) {
-      console.error('Failed to add company:', error);
-      setMessage('Failed to add company. Please try again.');
+      console.error('Failed to add stock:', error);
+      setMessage(error.message || 'Failed to add stock. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -117,8 +261,10 @@ export default function AddStock() {
     setShowOptions(false);
     setShowStockDialog(false);
     setShowDateDialog(false);
-    resetForm();
+    resetStockForm();
+    resetDateForm();
   };
+
 
   return (
     <>
@@ -143,29 +289,59 @@ export default function AddStock() {
         <div className="drag-bar"></div>
         <h2>Add Stock</h2>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleAddStock}>
           <div className="form-row">
             <div className="form-group">
               <label>Company *</label>
               <select
                 value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                disabled={loading}
+                onChange={handleCompanySelect}
+                disabled={loading || companiesLoading}
               >
-                <option value="">Select</option>
-                {companies.map((company) => (
-                  <option key={company} value={company}>{company}</option>
+                <option value="">
+                  {companiesLoading ? 'Loading companies...' : companies.length === 0 ? 'No companies available - Add one first!' : 'Select Company'}
+                </option>
+                {companies.length > 0 && companies.map((company) => (
+                  <option key={company.id} value={company.id}>{company.name}</option>
                 ))}
               </select>
             </div>
             <div className="form-group">
               <label>Stock Date *</label>
-              <input
-                type="date"
-                value={stockDate}
-                onChange={(e) => setStockDate(e.target.value)}
-                disabled={loading}
-              />
+              <div className="stock-date-wrapper">
+                <select
+                  value={stockDateId}
+                  onChange={(e) => setStockDateId(e.target.value)}
+                  disabled={loading || !companyName}
+                >
+                  <option value="">
+                    {!companyName
+                      ? 'Select Company First'
+                      : stockDates.length === 0
+                      ? 'No Dates - Add using Calendar button'
+                      : 'Select Date'}
+                  </option>
+                  {stockDates.map((date) => (
+                    <option key={date.id} value={date.id}>
+                      {date.arrivalDate instanceof Date
+                        ? date.arrivalDate.toLocaleDateString()
+                        : new Date(date.arrivalDate).toLocaleDateString()}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="add-date-icon-btn"
+                  onClick={() => {
+                    setShowStockDialog(false);
+                    setShowDateDialog(true);
+                  }}
+                  title="Add new dates"
+                  disabled={!companyName}
+                >
+                  <FiCalendar size={18} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -205,7 +381,6 @@ export default function AddStock() {
             </div>
           </div>
 
-
           <div className="form-row">
             <div className="form-group">
               <label>Box Price *</label>
@@ -218,7 +393,6 @@ export default function AddStock() {
               />
             </div>
             <div className="form-group">
-
               <label>GST %</label>
               <input
                 type="number"
@@ -229,7 +403,6 @@ export default function AddStock() {
               />
             </div>
           </div>
-
 
           <div className="total-units-box">
             <div className="total-unit-item">
@@ -273,39 +446,54 @@ export default function AddStock() {
 
       <div className={`bottom-sheet ${showDateDialog ? 'open' : ''}`}>
         <div className="drag-bar"></div>
-        <h2>Add Date</h2>
+        <h2>Add Stock Arrival Date</h2>
 
-        <form>
-
-          <label>Company *</label>
+        <form onSubmit={handleAddDate}>
+          <div className="form-row full">
+            <div className="form-group">
+              <label>Company *</label>
               <select
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                disabled={loading}
+                value={dateCompanyName}
+                onChange={(e) => setDateCompanyName(e.target.value)}
+                disabled={loading || companiesLoading}
               >
-                <option value="">Select</option>
+                <option value="">Select Company</option>
                 {companies.map((company) => (
-                  <option key={company} value={company}>{company}</option>
+                  <option key={company.id} value={company.id}>{company.name}</option>
                 ))}
               </select>
+            </div>
+          </div>
 
-          <label>Select Date</label>
-          <input type="date"
-            value={stockDate}
-            onChange={(e) => setStockDate(e.target.value)}
-            disabled={loading}
-          />
+          <div className="form-row full">
+            <div className="form-group">
+              <label>Arrival Date *</label>
+              <input
+                type="date"
+                value={arrivalDate}
+                onChange={(e) => setArrivalDate(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+          </div>
 
-          <label>Stock Amount</label>
-          <input
-            type="number"
-            value={stockAmount}
-            onChange={(e) => setStockAmount(e.target.value)}
-            placeholder="Enter stock amount"
-            disabled={loading}
-          />
-          <button className="submit-btn" type="submit">
-            Add Date
+          <div className="form-row full">
+            <div className="form-group">
+              <label>Amount *</label>
+              <input
+                type="number"
+                value={dateAmount}
+                onChange={(e) => setDateAmount(e.target.value)}
+                placeholder="Enter amount"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          {message && <p className="form-message error">{message}</p>}
+
+          <button className="submit-btn" type="submit" disabled={loading}>
+            {loading ? 'Adding Date...' : 'Add Date'}
           </button>
         </form>
       </div>

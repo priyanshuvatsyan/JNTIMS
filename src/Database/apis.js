@@ -39,8 +39,15 @@ export async function addCompany(company) {
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of company objects, each with an 'id' field.
  */
 export async function getCompanies() {
-  const snapshot = await getDocs(companiesCollection);
-  return snapshot.docs.map((docSnapshot) => ({ id: docSnapshot.id, ...docSnapshot.data() }));
+  try {
+    const snapshot = await getDocs(companiesCollection);
+    const companies = snapshot.docs.map((docSnapshot) => ({ id: docSnapshot.id, ...docSnapshot.data() }));
+    console.log('getCompanies API result:', companies);
+    return companies;
+  } catch (error) {
+    console.error('Error in getCompanies:', error);
+    throw error;
+  }
 }
 
 /**
@@ -85,7 +92,7 @@ export async function addStockArrivalDate(data) {
   const newEntry = {
     companyId,
     amount: Number(amount),
-    arrivalDate: new Date(arrivalDate), // convert from input
+    arrivalDate: new Date(arrivalDate), // Firestore will convert to Timestamp
     createdAt: serverTimestamp(),
   };
 
@@ -93,7 +100,10 @@ export async function addStockArrivalDate(data) {
 
   return {
     id: docRef.id,
-    ...newEntry,
+    companyId,
+    amount: Number(amount),
+    arrivalDate: new Date(arrivalDate), // Return JS Date for consistency
+    createdAt: new Date(),
   };
 }
 
@@ -101,10 +111,16 @@ export async function addStockArrivalDate(data) {
 export async function getAllStockArrivalDates() {
   const snapshot = await getDocs(stockArrivalDateCollection);
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      companyId: data.companyId,
+      amount: data.amount,
+      arrivalDate: data.arrivalDate?.toDate?.() || new Date(data.arrivalDate),
+      createdAt: data.createdAt?.toDate?.() || data.createdAt,
+    };
+  });
 }
 
 // 🔹 2. Filtered (by company)
@@ -118,10 +134,16 @@ export async function getStockArrivalDate_basedOnCompany(companyId) {
 
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      companyId: data.companyId,
+      amount: data.amount,
+      arrivalDate: data.arrivalDate?.toDate?.() || new Date(data.arrivalDate),
+      createdAt: data.createdAt?.toDate?.() || data.createdAt,
+    };
+  });
 }
 
 export async function editStockArrivalDate(entryId, data) {
@@ -150,9 +172,6 @@ export async function deleteStockArrivalDate(entryId) {
   await deleteDoc(entryDoc);
 }
 
-
-import { addDoc, getDocs, deleteDoc, updateDoc, doc, serverTimestamp, query, where } from "firebase/firestore";
-import { db } from "../../firebase.js";
 
 const stockDataCollection = collection(db, "stockData");
 
