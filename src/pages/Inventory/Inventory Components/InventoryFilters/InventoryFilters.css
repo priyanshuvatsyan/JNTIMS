@@ -103,12 +103,12 @@
 }
 
 @media (max-width: 740px) {
-  .elementary {
+  /* .elementary {
     grid-template-columns: 1fr;
-  }
+  } */
 
   .stock-option span {
-    min-width: 80px;
-    padding: 10px 14px;
+    min-width: 50px;
+    padding: 5px 7px;
   }
 }
