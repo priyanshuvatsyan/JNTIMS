@@ -51,17 +51,41 @@ export async function getCompanies() {
 }
 
 /**
- * Deletes a company from the Firestore 'companies' collection by its ID.
+ * Deletes a company and everything realted to it (arrival date,stockItems) from the Firestore 'companies' collection by its ID.
  * @param {string} companyId - The ID of the company to delete.
  * @throws {Error} If the company ID is missing.
  */
-export async function deleteCompany(companyId) {
-  if (!companyId) {
-    throw new Error("Company ID is required");
-  }
 
-  const companyDoc = doc(db, "companies", companyId);
-  await deleteDoc(companyDoc);
+export async function deleteCompany(companyId) {
+  if (!companyId) throw new Error("Company ID is required");
+
+  try {
+    // 🔹 delete stockData
+    const stockQuery = query(
+      stockDataCollection,
+      where("companyId", "==", companyId)
+    );
+
+    const stockSnapshot = await getDocs(stockQuery);
+    await Promise.all(stockSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+
+    // 🔹 delete stockArrivalDate
+    const arrivalQuery = query(
+      stockArrivalDateCollection,
+      where("companyId", "==", companyId)
+    );
+
+    const arrivalSnapshot = await getDocs(arrivalQuery);
+    await Promise.all(arrivalSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+
+    // 🔹 delete company
+    const companyDoc = doc(db, "companies", companyId);
+    await deleteDoc(companyDoc);
+
+  } catch (error) {
+    console.error("Cascade delete failed:", error);
+    throw error;
+  }
 }
 
 /**
@@ -263,6 +287,31 @@ export async function addStock(data) {
 
 export async function getAllStock() {
   const snapshot = await getDocs(stockDataCollection);
+
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+}
+
+export async function getStocksByFilters(filters = {}) {
+  const { companyId, entryId } = filters;
+
+  if (!companyId && !entryId) {
+    return getAllStock();
+  }
+
+  let q = stockDataCollection;
+
+  if (companyId) {
+    q = query(q, where('companyId', '==', companyId));
+  }
+
+  if (entryId) {
+    q = query(q, where('entryId', '==', entryId));
+  }
+
+  const snapshot = await getDocs(q);
 
   return snapshot.docs.map(doc => ({
     id: doc.id,

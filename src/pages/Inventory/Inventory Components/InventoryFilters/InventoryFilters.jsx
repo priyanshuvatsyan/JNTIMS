@@ -2,17 +2,19 @@ import './InventoryFilters.css';
 import React, { useState, useEffect } from 'react';
 import {
   getCompanies,
-  addStockArrivalDate,
   getStockArrivalDate_basedOnCompany,
 } from '../../../../Database/apis';
 
-export default function InventoryFilters() {
-
+export default function InventoryFilters({
+  selectedCompany,
+  selectedStockDate,
+  stockStatus,
+  onCompanyChange,
+  onStockDateChange,
+  onStockStatusChange,
+}) {
   const [companies, setCompanies] = useState([]);
-  const [selectedCompany, setSelectedCompany] = useState('');
   const [stockDates, setStockDates] = useState([]);
-  const [selectedStockDates, setSelectedStockDates] = useState('');
-  const [stockStatus, setStockStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,20 +39,17 @@ export default function InventoryFilters() {
       setLoading(false);
     }
   };
-  // Fetch stock arrival dates for selected company
+
   const fetchStockDates = async (companyId) => {
     try {
       if (companyId) {
-        console.log('Fetching stock dates for company:', companyId);
         const dates = await getStockArrivalDate_basedOnCompany(companyId);
-        console.log('Fetched dates:', dates);
         setStockDates(dates);
       } else {
         setStockDates([]);
       }
     } catch (error) {
       console.error('Error fetching stock dates:', error);
-
       setStockDates([]);
     }
   };
@@ -58,7 +57,6 @@ export default function InventoryFilters() {
   return (
     <div className="InventoryFilters-container">
       <div className="elementary">
-
         <div className="company-filter">
           {loading ? (
             <p>Loading companies...</p>
@@ -67,11 +65,10 @@ export default function InventoryFilters() {
           ) : (
             <select
               value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
+              onChange={(e) => onCompanyChange(e.target.value)}
               className="company-dropdown"
             >
               <option value="">All Companies</option>
-
               {companies.map((company) => (
                 <option key={company.id} value={company.id}>
                   {company.name}
@@ -88,12 +85,11 @@ export default function InventoryFilters() {
             <p>{error}</p>
           ) : (
             <select
-              value={selectedStockDates}
-              onChange={(e) => setSelectedStockDates(e.target.value)}
+              value={selectedStockDate}
+              onChange={(e) => onStockDateChange(e.target.value)}
               className="company-dropdown"
             >
               <option value="">All Stock Arrivals</option>
-
               {stockDates.map((date) => (
                 <option key={date.id} value={date.id}>
                   {date.arrivalDate instanceof Date
@@ -104,17 +100,16 @@ export default function InventoryFilters() {
             </select>
           )}
         </div>
-
-
       </div>
+
       <div className="secondary">
         <div className="stock-filter">
           <label className="stock-option">
             <input
               type="radio"
               value=""
-              checked={stockStatus === ""}
-              onChange={(e) => setStockStatus(e.target.value)}
+              checked={stockStatus === ''}
+              onChange={(e) => onStockStatusChange(e.target.value)}
             />
             <span>All</span>
           </label>
@@ -123,8 +118,8 @@ export default function InventoryFilters() {
             <input
               type="radio"
               value="in"
-              checked={stockStatus === "in"}
-              onChange={(e) => setStockStatus(e.target.value)}
+              checked={stockStatus === 'in'}
+              onChange={(e) => onStockStatusChange(e.target.value)}
             />
             <span>In Stock</span>
           </label>
@@ -133,8 +128,8 @@ export default function InventoryFilters() {
             <input
               type="radio"
               value="out"
-              checked={stockStatus === "out"}
-              onChange={(e) => setStockStatus(e.target.value)}
+              checked={stockStatus === 'out'}
+              onChange={(e) => onStockStatusChange(e.target.value)}
             />
             <span>Out of Stock</span>
           </label>
@@ -143,8 +138,8 @@ export default function InventoryFilters() {
             <input
               type="radio"
               value="low"
-              checked={stockStatus === "low"}
-              onChange={(e) => setStockStatus(e.target.value)}
+              checked={stockStatus === 'low'}
+              onChange={(e) => onStockStatusChange(e.target.value)}
             />
             <span>Low Stock</span>
           </label>

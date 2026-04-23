@@ -7,6 +7,8 @@ import { getCompanies, deleteCompany } from '../../../../Database/apis';
 export default function CompaniesList({ searchTerm }) {
     const [openId, setOpenId] = useState(null);
     const [deleteCompanyId, setDeleteCompanyId] = useState(null);
+    const [countdown, setCountdown] = useState(5);
+    const [isCounting, setIsCounting] = useState(false);
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -14,6 +16,21 @@ export default function CompaniesList({ searchTerm }) {
     useEffect(() => {
         fetchCompanies();
     }, []);
+
+    useEffect(() => {
+        if (!isCounting) return;
+
+        if (countdown === 0) {
+            setIsCounting(false);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setCountdown(prev => prev - 1);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [countdown, isCounting]);
 
     const fetchCompanies = async () => {
         try {
@@ -35,7 +52,11 @@ export default function CompaniesList({ searchTerm }) {
         try {
             await deleteCompany(deleteCompanyId);
             setCompanies(companies.filter(company => company.id !== deleteCompanyId));
+
             setDeleteCompanyId(null);
+            setIsCounting(false);
+            setCountdown(5);
+
         } catch (err) {
             console.error('Failed to delete company:', err);
             setError('Failed to delete company');
@@ -148,7 +169,11 @@ export default function CompaniesList({ searchTerm }) {
 
                                     <button
                                         className="delete-btn"
-                                        onClick={() => setDeleteCompanyId(company.id)}
+                                        onClick={() => {
+                                            setDeleteCompanyId(company.id);
+                                            setCountdown(5);
+                                            setIsCounting(true);
+                                        }}
                                     >
                                         Delete
                                     </button>
@@ -167,23 +192,40 @@ export default function CompaniesList({ searchTerm }) {
                     ></div>
 
                     <div className="delete-modal">
-                        <h3>Delete Company</h3>
-                        <p>Are you sure you want to delete this company?</p>
+                        <div className="delete-box">
+                            <h3>Warning</h3>
 
-                        <div className="delete-actions">
-                            <button
-                                className="cancel-btn"
-                                onClick={() => setDeleteCompanyId(null)}
-                            >
-                                Cancel
-                            </button>
+                            <p>Deleting this company will permanently remove:</p>
 
-                            <button
-                                className="confirm-delete-btn"
-                                onClick={handleDelete}
-                            >
-                                Delete
-                            </button>
+                            <ul style={{ listStyle: "none", paddingLeft: 0 }}>
+                                <li style={{ margin: "5px 0" }}>All stock entries</li>
+                                <li style={{ margin: "5px 0" }}>All arrival dates</li>
+                                <li style={{ margin: "5px 0" }}>All related data</li>
+                            </ul>
+
+                            <p>This action cannot be undone.</p>
+
+                            <div className="delete-actions">
+                                <button
+                                    className="cancel-btn"
+                                    onClick={() => setDeleteCompanyId(null)}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    className="confirm-delete-btn"
+                                    disabled={isCounting}
+                                    onClick={handleDelete}
+                                    style={{
+                                        backgroundColor: isCounting ? "#858585" : "#e53935",
+                                        cursor: isCounting ? "not-allowed" : "pointer",
+                                        opacity: isCounting ? 0.7 : 1
+                                    }}
+                                >
+                                    {isCounting ? `Wait ${countdown}s...` : "Confirm Delete"}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </>
