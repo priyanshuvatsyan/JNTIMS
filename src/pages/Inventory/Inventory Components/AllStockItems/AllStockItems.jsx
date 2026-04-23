@@ -1,58 +1,71 @@
 import React from 'react';
 import './AllStockItems.css';
 
-function getStockStatusLabel(stock) {
-  if (stock.remainingQty === 0) return 'Out of Stock';
-  if (stock.remainingQty > 0 && stock.remainingQty <= 5) return 'Low Stock';
-  if (stock.remainingQty > 0) return 'In Stock';
-  return 'Unknown';
+function getStockStatus(stock) {
+  if (stock.remainingQty === 0) return 'out';
+  if (stock.remainingQty > 0 && stock.remainingQty <= 5) return 'low';
+  return 'in';
 }
 
 export default function AllStockItems({ stocks, loading, error }) {
-  if (loading) {
-    return <div className="all-stock-items">Loading stock records...</div>;
-  }
-
-  if (error) {
-    return <div className="all-stock-items error">{error}</div>;
-  }
-
-  if (!stocks || stocks.length === 0) {
+  if (loading) return <div className="all-stock-items">Loading...</div>;
+  if (error) return <div className="all-stock-items error">{error}</div>;
+  if (!stocks || stocks.length === 0)
     return <div className="all-stock-items empty">No stock items found.</div>;
-  }
 
   return (
     <div className="all-stock-items">
-      <table className="stock-table">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Company</th>
-            <th>Entry</th>
-            <th>Boxes</th>
-            <th>Units/Box</th>
-            <th>Remaining</th>
-            <th>Price</th>
-            <th>GST</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stocks.map((stock) => (
-            <tr key={stock.id}>
-              <td>{stock.productName || '—'}</td>
-              <td>{stock.companyId || '—'}</td>
-              <td>{stock.entryId || '—'}</td>
-              <td>{stock.boxes ?? '—'}</td>
-              <td>{stock.unitsPerBox ?? '—'}</td>
-              <td>{stock.remainingQty ?? '—'}</td>
-              <td>{stock.sellingPrice ?? '—'}</td>
-              <td>{stock.gst ?? '—'}%</td>
-              <td>{getStockStatusLabel(stock)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {stocks.map((stock) => {
+        const status = getStockStatus(stock);
+
+        return (
+          <div className="stock-card" key={stock.id}>
+            
+            {/* Header */}
+            <div className="card-header">
+              <h3>{stock.productName}</h3>
+              <span className={`badge ${status}`}>
+                {status === 'in' && 'In Stock'}
+                {status === 'low' && 'Low Stock'}
+                {status === 'out' && 'Out of Stock'}
+              </span>
+            </div>
+
+            
+
+            {/* Stock Info */}
+            <div className="stock-info">
+              <div className="stock-row">
+                <span>{stock.remainingQty} units</span>
+                <span>Min: 10</span>
+              </div>
+
+              <div className="progress-bar">
+                <div
+                  className={`progress ${status}`}
+                  style={{
+                    width: `${Math.min((stock.remainingQty / 50) * 100, 100)}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="price-row">
+              <span>Sell <b>${stock.sellingPrice}</b></span>
+              <span>Buy ${stock.buyingPrice || '—'}</span>
+              <span>GST {stock.gst}%</span>
+            </div>
+
+            {/* Actions */}
+            <div className="actions">
+              <button>Edit</button>
+              <button className="delete">Delete</button>
+              <button className="sell">Sell</button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

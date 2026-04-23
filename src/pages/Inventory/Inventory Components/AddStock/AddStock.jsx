@@ -33,7 +33,7 @@ export default function AddStock() {
   const [unitsPerBox, setUnitsPerBox] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [boxPriceWithoutGst, setBoxPriceWithoutGst] = useState('');
-  const [gstPercentage, setGstPercentage] = useState('');
+  const GST_PERCENTAGE = 5;
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -110,8 +110,7 @@ export default function AddStock() {
     setBoxes('');
     setUnitsPerBox('');
     setSellingPrice('');
-    setBoxPriceWithoutGst('');
-    setGstPercentage('');
+    setBoxPriceWithoutGst(''); 
     setMessage('');
   };
 
@@ -125,7 +124,7 @@ export default function AddStock() {
   // UI Calculations (for display only)
   const totalUnits = boxes && unitsPerBox ? Number(boxes) * Number(unitsPerBox) : 0;
   const boxPrice = Number(boxPriceWithoutGst) || 0;
-  const gstRate = Number(gstPercentage) || 0;
+ const gstRate = GST_PERCENTAGE;
   const boxPriceWithGst = boxPrice * (1 + gstRate / 100);
   const perUnitPriceNoGst = Number(unitsPerBox) > 0 ? boxPrice / Number(unitsPerBox) : 0;
   const perUnitPriceWithGst = Number(unitsPerBox) > 0 ? boxPriceWithGst / Number(unitsPerBox) : 0;
@@ -215,10 +214,7 @@ export default function AddStock() {
       return;
     }
 
-    if (!gstPercentage || gstPercentage < 0) {
-      setMessage('GST percentage is required and must be 0 or greater');
-      return;
-    }
+
 
     if (!sellingPrice || sellingPrice <= 0) {
       setMessage('Selling price is required and must be greater than 0');
@@ -239,7 +235,7 @@ export default function AddStock() {
         unitPriceWithoutGst: perUnitPriceNoGst,
         unitPriceWithGst: perUnitPriceWithGst,
         sellingPrice: Number(sellingPrice),
-        gst: Number(gstPercentage)
+      gst: GST_PERCENTAGE
       });
 
       setMessage('Stock added successfully!');
@@ -392,16 +388,14 @@ export default function AddStock() {
                 disabled={loading}
               />
             </div>
-            <div className="form-group">
-              <label>GST %</label>
-              <input
-                type="number"
-                value={gstPercentage}
-                onChange={(e) => setGstPercentage(e.target.value)}
-                placeholder="18%"
-                disabled={loading}
-              />
-            </div>
+<div className="form-group">
+  <label>GST %</label>
+  <input
+    type="text"
+    value={`${GST_PERCENTAGE}%`}
+    disabled
+  />
+</div>
           </div>
 
           <div className="total-units-box">
