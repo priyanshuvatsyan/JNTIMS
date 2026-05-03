@@ -39,7 +39,7 @@
 }
 
 .options-menu {
-  position: absolute;
+  position: fixed;
   bottom: 160px;
   right: 15px;
   padding: 12px;

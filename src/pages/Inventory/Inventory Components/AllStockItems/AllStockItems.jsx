@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './AllStockItems.css';
 
 function getStockStatus(stock) {
@@ -7,7 +7,42 @@ function getStockStatus(stock) {
   return 'in';
 }
 
-export default function AllStockItems({ stocks, loading, error }) {
+const capitalizeWords = (str) => 
+  str.replace(/\b\w/g, (char) => char.toUpperCase());
+
+export default function AllStockItems({ stocks, loading, error, onDelete, onEdit }) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedStockId, setSelectedStockId] = useState(null);
+  const [deleteTimer, setDeleteTimer] = useState(0);
+
+  useEffect(() => {
+    if (deleteTimer > 0) {
+      const timer = setTimeout(() => setDeleteTimer(deleteTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [deleteTimer]);
+
+  const handleDeleteClick = (stockId) => {
+    setSelectedStockId(stockId);
+    setShowDeleteModal(true);
+    setDeleteTimer(5);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedStockId) {
+      onDelete(selectedStockId);
+    }
+    setShowDeleteModal(false);
+    setSelectedStockId(null);
+    setDeleteTimer(0);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setSelectedStockId(null);
+    setDeleteTimer(0);
+  };
+
   if (loading) return <div className="all-stock-items">Loading...</div>;
   if (error) return <div className="all-stock-items error">{error}</div>;
   if (!stocks || stocks.length === 0)
@@ -19,11 +54,12 @@ export default function AllStockItems({ stocks, loading, error }) {
         const status = getStockStatus(stock);
 
         return (
+          
           <div className="stock-card" key={stock.id}>
             
             {/* Header */}
             <div className="card-header">
-              <h3>{stock.productName}</h3>
+              <h3>{capitalizeWords(stock.productName)}</h3>
               <span className={`badge ${status}`}>
                 {status === 'in' && 'In Stock'}
                 {status === 'low' && 'Low Stock'}
@@ -59,13 +95,28 @@ export default function AllStockItems({ stocks, loading, error }) {
 
             {/* Actions */}
             <div className="actions">
-              <button>Edit</button>
-              <button className="delete">Delete</button>
+              <button onClick={() => onEdit && onEdit(stock)}>Edit</button>
+              <button className="delete" onClick={() => handleDeleteClick(stock.id)}>Delete</button>
               <button className="sell">Sell</button>
             </div>
           </div>
         );
       })}
+
+      {showDeleteModal && (
+        <div className="stock-delete-modal-overlay">
+          <div className="stock-modal-content">
+            <h3>Are you sure you want to delete this item?</h3>
+            <p>Delete button will be enabled in {deleteTimer} seconds.</p>
+            <div className="stock-modal-actions">
+              <button onClick={handleCancelDelete}>Cancel</button>
+              <button disabled={deleteTimer > 0} onClick={handleConfirmDelete}>
+                {deleteTimer > 0 ? `Delete (${deleteTimer}s)` : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

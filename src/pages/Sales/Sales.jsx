@@ -1,5 +1,8 @@
 
 import Nav from '../../components/Nav/Nav';
+import QuickSalesHeader from '../../pages/Sales/QuickSalesHeader/QuickSalesHeader';
+import SellItems from './SellItems/SellItems';
+import RecentSoldItems from './RecentSoldItems/RecentSoldItems'
 // import './Sales.css';
 
 
@@ -9,8 +12,9 @@ export default function Sales() {
 
   return (
     <div className="sales-container">
-         <h1>Sales Page</h1>
-      
+         <QuickSalesHeader />
+          <SellItems />
+          <RecentSoldItems />
     </div>
   );
 }

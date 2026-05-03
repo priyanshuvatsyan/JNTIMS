@@ -4,13 +4,14 @@ import {
   getCompanies, 
   addStockArrivalDate, 
   getStockArrivalDate_basedOnCompany,
-  addStock
+  addStock,
+  updateStock
 } from '../../../../Database/apis';
 
 import './AddStock.css';
 
 
-export default function AddStock() {
+export default function AddStock({ editStock = null, onEditClose }) {
   const [showOptions, setShowOptions] = useState(false);
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [showDateDialog, setShowDateDialog] = useState(false);
@@ -38,48 +39,45 @@ export default function AddStock() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Fetch companies on component mount
+  // Fetch companies on mount
   useEffect(() => {
     fetchCompanies();
   }, []);
 
-  // Log companies
+  // Pre-fill form when editStock is set
   useEffect(() => {
-    console.log('Companies state:', companies);
-  }, [companies]);
-
-  // Log stockDates for debugging
-  useEffect(() => {
-    console.log('Stock dates loaded:', stockDates);
-  }, [stockDates]);
-
-  // Log companyName
-  useEffect(() => {
-    console.log('CompanyName state:', companyName);
-  }, [companyName]);
+    if (editStock) {
+      setCompanyName(editStock.companyId || '');
+      setStockDateId(editStock.entryId || '');
+      setProductName(editStock.productName || '');
+      setBoxes(editStock.boxes || '');
+      setUnitsPerBox(editStock.unitsPerBox || '');
+      setSellingPrice(editStock.sellingPrice || '');
+      setBoxPriceWithoutGst(editStock.boxPriceWithoutGst || '');
+      if (editStock.companyId) {
+        fetchStockDates(editStock.companyId);
+      }
+      setShowStockDialog(true);
+    }
+  }, [editStock]);
 
   const fetchCompanies = async () => {
     try {
       setCompaniesLoading(true);
-      console.log('Starting fetchCompanies...');
       const companiesList = await getCompanies();
-      console.log('✅ Companies fetched successfully:', companiesList);
       setCompanies(companiesList);
     } catch (error) {
-      console.error('❌ Error fetching companies:', error);
+      console.error('Error fetching companies:', error);
       setMessage('Failed to load companies');
     } finally {
       setCompaniesLoading(false);
     }
   };
 
-  // Fetch stock arrival dates for selected company
   const fetchStockDates = async (companyId) => {
     try {
       if (companyId) {
-        console.log('Fetching stock dates for company:', companyId);
         const dates = await getStockArrivalDate_basedOnCompany(companyId);
-        console.log('Fetched dates:', dates);
         setStockDates(dates);
       } else {
         setStockDates([]);
@@ -93,11 +91,9 @@ export default function AddStock() {
 
   const handleCompanySelect = (e) => {
     const selectedId = e.target.value;
-    console.log('Company selected:', selectedId);
     setCompanyName(selectedId);
     setStockDateId('');
     const selectedCompany = companies.find(c => c.id === selectedId);
-    console.log('Selected company object:', selectedCompany);
     if (selectedCompany) {
       fetchStockDates(selectedCompany.id);
     }
@@ -110,7 +106,7 @@ export default function AddStock() {
     setBoxes('');
     setUnitsPerBox('');
     setSellingPrice('');
-    setBoxPriceWithoutGst(''); 
+    setBoxPriceWithoutGst('');
     setMessage('');
   };
 
@@ -121,10 +117,10 @@ export default function AddStock() {
     setMessage('');
   };
 
-  // UI Calculations (for display only)
+  // UI Calculations (display only)
   const totalUnits = boxes && unitsPerBox ? Number(boxes) * Number(unitsPerBox) : 0;
   const boxPrice = Number(boxPriceWithoutGst) || 0;
- const gstRate = GST_PERCENTAGE;
+  const gstRate = GST_PERCENTAGE;
   const boxPriceWithGst = boxPrice * (1 + gstRate / 100);
   const perUnitPriceNoGst = Number(unitsPerBox) > 0 ? boxPrice / Number(unitsPerBox) : 0;
   const perUnitPriceWithGst = Number(unitsPerBox) > 0 ? boxPriceWithGst / Number(unitsPerBox) : 0;
@@ -138,19 +134,16 @@ export default function AddStock() {
       setMessage('Company is required');
       return;
     }
-
     if (!arrivalDate) {
       setMessage('Arrival date is required');
       return;
     }
-
     if (!dateAmount || dateAmount <= 0) {
       setMessage('Amount must be greater than 0');
       return;
     }
 
     setLoading(true);
-
     try {
       const selectedCompany = companies.find(c => c.id === dateCompanyName);
       if (!selectedCompany) throw new Error('Company not found');
@@ -163,10 +156,8 @@ export default function AddStock() {
 
       setMessage('Stock arrival date added successfully!');
       resetDateForm();
-      
-      // Refresh stock dates
       await fetchStockDates(selectedCompany.id);
-      
+
       setTimeout(() => {
         setShowDateDialog(false);
         setMessage('');
@@ -179,75 +170,64 @@ export default function AddStock() {
     }
   };
 
-  // Handle Adding Stock
+  // Handle Adding / Updating Stock
   const handleAddStock = async (event) => {
     event.preventDefault();
     setMessage('');
 
-    if (!companyName.trim()) {
-      setMessage('Company is required');
-      return;
-    }
-
-    if (!stockDateId.trim()) {
-      setMessage('Stock arrival date is required');
-      return;
-    }
-
-    if (!productName.trim()) {
-      setMessage('Product name is required');
-      return;
-    }
-
-    if (!boxes || boxes <= 0) {
-      setMessage('Number of boxes is required and must be greater than 0');
-      return;
-    }
-
-    if (!unitsPerBox || unitsPerBox <= 0) {
-      setMessage('Units per box is required and must be greater than 0');
-      return;
-    }
-
-    if (!boxPriceWithoutGst || boxPriceWithoutGst <= 0) {
-      setMessage('Box price is required and must be greater than 0');
-      return;
-    }
-
-
-
-    if (!sellingPrice || sellingPrice <= 0) {
-      setMessage('Selling price is required and must be greater than 0');
-      return;
-    }
+    if (!companyName.trim()) { setMessage('Company is required'); return; }
+    if (!stockDateId.trim()) { setMessage('Stock arrival date is required'); return; }
+    if (!productName.trim()) { setMessage('Product name is required'); return; }
+    if (!boxes || boxes <= 0) { setMessage('Number of boxes must be greater than 0'); return; }
+    if (!unitsPerBox || unitsPerBox <= 0) { setMessage('Units per box must be greater than 0'); return; }
+    if (!boxPriceWithoutGst || boxPriceWithoutGst <= 0) { setMessage('Box price must be greater than 0'); return; }
+    if (!sellingPrice || sellingPrice <= 0) { setMessage('Selling price must be greater than 0'); return; }
 
     setLoading(true);
-
     try {
-      await addStock({
-        companyId: companyName,
-        entryId: stockDateId,
-        productName,
-        boxes: Number(boxes),
-        unitsPerBox: Number(unitsPerBox),
-        boxPriceWithoutGst: Number(boxPriceWithoutGst),
-        boxPriceWithGst,
-        unitPriceWithoutGst: perUnitPriceNoGst,
-        unitPriceWithGst: perUnitPriceWithGst,
-        sellingPrice: Number(sellingPrice),
-      gst: GST_PERCENTAGE
-      });
+      if (editStock) {
+        // EDIT MODE
+        await updateStock(editStock.id, {
+          companyId: companyName,
+          entryId: stockDateId,
+          productName: productName.trim().toLowerCase(),
+          boxes: Number(boxes),
+          unitsPerBox: Number(unitsPerBox),
+          boxPriceWithoutGst: Number(boxPriceWithoutGst),
+          boxPriceWithGst,
+          unitPriceWithoutGst: perUnitPriceNoGst,
+          unitPriceWithGst: perUnitPriceWithGst,
+          sellingPrice: Number(sellingPrice),
+          gst: GST_PERCENTAGE,
+        });
+        setMessage('Stock updated successfully!');
+      } else {
+        // ADD MODE
+        await addStock({
+          companyId: companyName,
+          entryId: stockDateId,
+          productName: productName.trim().toLowerCase(),
+          boxes: Number(boxes),
+          unitsPerBox: Number(unitsPerBox),
+          boxPriceWithoutGst: Number(boxPriceWithoutGst),
+          boxPriceWithGst,
+          unitPriceWithoutGst: perUnitPriceNoGst,
+          unitPriceWithGst: perUnitPriceWithGst,
+          sellingPrice: Number(sellingPrice),
+          gst: GST_PERCENTAGE,
+        });
+        setMessage('Stock added successfully!');
+      }
 
-      setMessage('Stock added successfully!');
       resetStockForm();
-      
       setTimeout(() => {
         setShowStockDialog(false);
         setMessage('');
+        if (onEditClose) onEditClose();
       }, 2000);
     } catch (error) {
-      console.error('Failed to add stock:', error);
-      setMessage(error.message || 'Failed to add stock. Please try again.');
+      console.error('Failed to save stock:', error);
+      setMessage(error.message || 'Failed to save stock. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -259,8 +239,8 @@ export default function AddStock() {
     setShowDateDialog(false);
     resetStockForm();
     resetDateForm();
+    if (onEditClose) onEditClose();
   };
-
 
   return (
     <>
@@ -281,9 +261,10 @@ export default function AddStock() {
 
       {(showStockDialog || showDateDialog) && <div className="overlay" onClick={closeAll}></div>}
 
+      {/* ── Add / Edit Stock Sheet ── */}
       <div className={`bottom-sheet ${showStockDialog ? 'open' : ''}`}>
         <div className="drag-bar"></div>
-        <h2>Add Stock</h2>
+        <h2>{editStock ? 'Edit Stock' : 'Add Stock'}</h2>
 
         <form onSubmit={handleAddStock}>
           <div className="form-row">
@@ -295,13 +276,14 @@ export default function AddStock() {
                 disabled={loading || companiesLoading}
               >
                 <option value="">
-                  {companiesLoading ? 'Loading companies...' : companies.length === 0 ? 'No companies available - Add one first!' : 'Select Company'}
+                  {companiesLoading ? 'Loading companies...' : companies.length === 0 ? 'No companies available' : 'Select Company'}
                 </option>
-                {companies.length > 0 && companies.map((company) => (
+                {companies.map((company) => (
                   <option key={company.id} value={company.id}>{company.name}</option>
                 ))}
               </select>
             </div>
+
             <div className="form-group">
               <label>Stock Date *</label>
               <div className="stock-date-wrapper">
@@ -314,7 +296,7 @@ export default function AddStock() {
                     {!companyName
                       ? 'Select Company First'
                       : stockDates.length === 0
-                      ? 'No Dates - Add using Calendar button'
+                      ? 'No Dates - Add using Calendar'
                       : 'Select Date'}
                   </option>
                   {stockDates.map((date) => (
@@ -379,7 +361,7 @@ export default function AddStock() {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Box Price *</label>
+              <label>Box Price (without GST) *</label>
               <input
                 type="number"
                 value={boxPriceWithoutGst}
@@ -388,14 +370,14 @@ export default function AddStock() {
                 disabled={loading}
               />
             </div>
-<div className="form-group">
-  <label>GST %</label>
-  <input
-    type="text"
-    value={`${GST_PERCENTAGE}%`}
-    disabled
-  />
-</div>
+            <div className="form-group">
+              <label>GST %</label>
+              <input
+                type="text"
+                value={`${GST_PERCENTAGE}%`}
+                disabled
+              />
+            </div>
           </div>
 
           <div className="total-units-box">
@@ -419,7 +401,7 @@ export default function AddStock() {
 
           <div className="form-row full">
             <div className="form-group">
-              <label>Sell Price ($) *</label>
+              <label>Selling Price (₹) *</label>
               <input
                 type="number"
                 value={sellingPrice}
@@ -433,11 +415,14 @@ export default function AddStock() {
           {message && <p className="form-message error">{message}</p>}
 
           <button className="submit-btn" type="submit" disabled={loading}>
-            {loading ? 'Adding Stock...' : 'Add Stock'}
+            {loading
+              ? (editStock ? 'Updating...' : 'Adding Stock...')
+              : (editStock ? 'Update Stock' : 'Add Stock')}
           </button>
         </form>
       </div>
 
+      {/* ── Add Stock Arrival Date Sheet ── */}
       <div className={`bottom-sheet ${showDateDialog ? 'open' : ''}`}>
         <div className="drag-bar"></div>
         <h2>Add Stock Arrival Date</h2>
@@ -494,4 +479,3 @@ export default function AddStock() {
     </>
   );
 }
- 

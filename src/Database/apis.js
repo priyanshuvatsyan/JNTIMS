@@ -3,7 +3,7 @@
  * This module provides CRUD operations for the 'companies' collection in Firestore.
  */
 
-import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, serverTimestamp,query, where } from "firebase/firestore";
+import { collection, addDoc, getDocs,getDoc,writeBatch ,deleteDoc, updateDoc, doc, serverTimestamp,query, where,orderBy, startAt, endAt  } from "firebase/firestore";
 import { db } from "../../firebase.js";
 
 
@@ -214,6 +214,18 @@ export async function addStock(data) {
     gst
   } = data;
 
+  //storing company name and entry date details for easy querying and data integrity (denormalization) 
+  const [companySnap, dateSnap] = await Promise.all([
+    getDoc(doc(db, 'companies', companyId)),
+    getDoc(doc(db, 'stockArrivalDate', entryId)),
+  ]);
+
+    if (!companySnap.exists()) throw new Error('Company not found');
+  if (!dateSnap.exists()) throw new Error('Stock arrival date not found');
+
+  const companyName = companySnap.data().name;
+  const arrivalDate = dateSnap.data().arrivalDate;
+
   // 🔒 Basic validation
   if (!companyId) throw new Error("Company ID required");
   if (!entryId) throw new Error("Entry ID required");
@@ -257,6 +269,9 @@ export async function addStock(data) {
     companyId,
     entryId,
 
+    companyName,   
+    arrivalDate,   
+
     productName: productName.trim(),
 
     boxes: boxesNum,
@@ -293,6 +308,8 @@ export async function getAllStock() {
     ...doc.data()
   }));
 }
+
+
 
 export async function getStocksByFilters(filters = {}) {
   const { companyId, entryId } = filters;
@@ -353,12 +370,12 @@ export async function getStockByEntry(entryId) {
   }));
 }
 
-export async function updateStock(stockId, data) {
-  if (!stockId) throw new Error("Stock ID required");
+// export async function updateStock(stockId, data) {
+//   if (!stockId) throw new Error("Stock ID required");
 
-  const stockDoc = doc(db, "stockData", stockId);
-  await updateDoc(stockDoc, data);
-}
+//   const stockDoc = doc(db, "stockData", stockId);
+//   await updateDoc(stockDoc, data);
+// }
 
 
 export async function deleteStock(stockId) {
@@ -366,4 +383,110 @@ export async function deleteStock(stockId) {
 
   const stockDoc = doc(db, "stockData", stockId);
   await deleteDoc(stockDoc);
+}
+
+
+
+export const updateStock = async (stockId, data) => {
+  const [companySnap, dateSnap] = await Promise.all([
+    getDoc(doc(db, 'companies', data.companyId)),
+    getDoc(doc(db, 'stockArrivalDate', data.entryId)),
+  ]);
+
+  if (!companySnap.exists()) throw new Error('Company not found');
+  if (!dateSnap.exists()) throw new Error('Stock arrival date not found');
+
+  const stockRef = doc(db, 'stockData', stockId);
+  await updateDoc(stockRef, {
+    ...data,
+    companyName: companySnap.data().name,
+    arrivalDate: dateSnap.data().arrivalDate,
+  });
+};
+
+
+//Sales Page
+export async function searchStock(searchTerm) {
+  if (!searchTerm.trim()) {
+    // Return all when empty — but add limit in production
+    const snapshot = await getDocs(query(stockDataCollection, orderBy('productName')));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+
+  // Firestore startsWith trick
+  const term = searchTerm.trim();
+  const end = term.slice(0, -1) + String.fromCharCode(term.charCodeAt(term.length - 1) + 1);
+
+  const q = query(
+    stockDataCollection,
+    orderBy('productName'),
+    startAt(term),
+    endAt(end)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+export async function makeSale(data) {
+  const { stockId, quantitySold, customerName } = data;
+
+  // ─── Validation ───────────────────────────────────────
+  if (!stockId) throw new Error("Stock ID is required");
+  if (!quantitySold || quantitySold <= 0) throw new Error("Quantity must be greater than 0");
+
+  // ─── Fetch stock document (source of truth) ───────────
+  const stockRef = doc(db, 'stockData', stockId);
+  const stockSnap = await getDoc(stockRef);
+
+  if (!stockSnap.exists()) throw new Error("Stock item not found");
+
+  const stock = stockSnap.data();
+
+  // ─── Check stock availability ─────────────────────────
+  if (stock.remainingQty < quantitySold) {
+    throw new Error(`Only ${stock.remainingQty} units available`);
+  }
+
+  // ─── Calculate financials ─────────────────────────────
+  const sellingPrice = stock.sellingPrice;
+  const costPrice = stock.unitPriceWithGst; // what you paid per unit
+  const totalRevenue = sellingPrice * quantitySold;
+  const totalCost = costPrice * quantitySold;
+  const totalProfit = totalRevenue - totalCost;
+  const newRemainingQty = stock.remainingQty - quantitySold;
+
+  // ─── Save sale record ─────────────────────────────────
+  const saleData = {
+    stockId,
+    companyId: stock.companyId,
+    entryId: stock.entryId,
+    companyName: stock.companyName,
+    arrivalDate: stock.arrivalDate,
+    productName: stock.productName,
+
+    quantitySold: Number(quantitySold),
+    sellingPrice,
+    costPrice,
+    totalRevenue,
+    totalCost,
+    totalProfit,
+
+    customerName: customerName?.trim() || null,
+    timestamp: serverTimestamp(),
+  };
+
+  // ─── Run both writes together ─────────────────────────
+  const batch = writeBatch(db);
+
+  // 1. Save the sale
+  const saleRef = doc(collection(db, 'sales'));
+  batch.set(saleRef, saleData);
+
+  // 2. Deduct from stock
+  batch.update(stockRef, { remainingQty: newRemainingQty });
+
+  await batch.commit();
+
+  return { id: saleRef.id, ...saleData };
 }
