@@ -3,7 +3,7 @@
  * This module provides CRUD operations for the 'companies' collection in Firestore.
  */
 
-import { collection, addDoc, getDocs,getDoc,writeBatch ,deleteDoc, updateDoc, doc, serverTimestamp,query, where,orderBy, startAt, endAt  } from "firebase/firestore";
+import { collection, addDoc,limit, getDocs,getDoc,Timestamp,writeBatch ,deleteDoc, updateDoc, doc, serverTimestamp,query, where,orderBy, startAt, endAt  } from "firebase/firestore";
 import { db } from "../../firebase.js";
 
 
@@ -489,4 +489,39 @@ export async function makeSale(data) {
   await batch.commit();
 
   return { id: saleRef.id, ...saleData };
+}
+
+export async function getRecentSales(limitCount = 30) {
+  const q = query(
+    collection(db, 'sales'),
+    orderBy('timestamp', 'desc'),
+    limit(limitCount)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+
+//get sales status for sales page header
+export async function getTodaysSalesStats() {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const q = query(
+    collection(db, 'sales'),
+    where('timestamp', '>=', Timestamp.fromDate(startOfDay))
+  );
+
+  const snapshot = await getDocs(q);
+  let todaysSales = 0;
+  let unitsSold = 0;
+  const transactions = snapshot.size;
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    todaysSales += data.totalRevenue || 0;
+    unitsSold += data.quantitySold || 0;
+  });
+
+  return { todaysSales, unitsSold, transactions };
 }

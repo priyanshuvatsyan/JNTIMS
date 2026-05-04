@@ -14,7 +14,7 @@ const capitalizeWords = (str) =>
 
 const QUICK_QTYS = [1, 5, 10, 25];
 
-export default function SellItems() {
+export default function SellItems({ onSaleComplete }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +85,7 @@ export default function SellItems() {
       setSellMessage(err.message || 'Sale failed. Try again.');
     } finally {
       setSelling(false);
+      if (onSaleComplete) onSaleComplete();
     }
   };
 

@@ -1,0 +1,176 @@
+.rsi-container {
+  position: sticky;
+  bottom: calc(65px + 12px);
+  z-index: 3;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  overflow: visible;
+  margin-top: 12px;
+}
+
+.rsi-panel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  border-top: none;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.08);
+  max-height: 480px;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+/* ── Trigger bar ── */
+.rsi-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.rsi-trigger:hover {
+  background: #f9fffe;
+}
+
+.rsi-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.rsi-clock-icon {
+  color: #27ae60;
+}
+
+/* ── Chevron animation ── */
+.rsi-chevron {
+  color: #aaa;
+  transition: transform 0.25s ease;
+}
+
+.rsi-chevron.down {
+  transform: rotate(180deg);
+}
+
+.rsi-chevron.up {
+  transform: rotate(0deg);
+}
+
+/* ── Panel ── */
+.rsi-panel {
+  border-top: 1px solid #f0f0f0;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.rsi-state {
+  padding: 32px;
+  text-align: center;
+  color: #bbb;
+  font-size: 0.875rem;
+}
+
+/* ── Row ── */
+.rsi-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f7f7f7;
+  transition: background 0.15s;
+}
+
+.rsi-row:last-child {
+  border-bottom: none;
+}
+
+.rsi-row:hover {
+  background: #f9fffe;
+}
+
+/* ── Left ── */
+.rsi-row-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rsi-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #e8faf2;
+  color: #27ae60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rsi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rsi-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.rsi-meta {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+/* ── Right ── */
+.rsi-row-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.rsi-revenue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.rsi-time {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .rsi-trigger {
+    padding: 12px 14px;
+  }
+
+  .rsi-row {
+    padding: 10px 14px;
+  }
+
+  .rsi-name {
+    font-size: 0.82rem;
+  }
+
+  .rsi-revenue {
+    font-size: 0.82rem;
+  }
+
+  .rsi-panel {
+    max-height: 360px;
+  }
+}
