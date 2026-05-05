@@ -1,5 +1,6 @@
 
 import Nav from '../../components/Nav/Nav';
+import BillsHeader from './BillsHeader/BillsHeader';
 // import './Bills.css';
 
 
@@ -9,7 +10,7 @@ export default function Bills() {
 
   return (
     <div className="bills-container">
-         <h1>Bills Page</h1>
+        <BillsHeader />
       
     </div>
   );

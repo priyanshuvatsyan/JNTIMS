@@ -1,0 +1,141 @@
+.bh-container {
+  background: linear-gradient(135deg, #3b5bdb 0%, #4c6ef5 60%, #748ffc 100%);
+  border-radius: 14px;
+  padding: 18px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background orb for depth */
+.bh-container::before {
+  content: '';
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  top: -40px;
+  right: -40px;
+  pointer-events: none;
+}
+
+.bh-title {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+/* ── Grid layout ── */
+.bh-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── Base card ── */
+.bh-card {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+}
+
+.bh-card-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.bh-card-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.bh-card-sub {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 2px;
+}
+
+/* ── Payable card spans full height of right col ── */
+.bh-card-payable {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ── Right column stacks two cards ── */
+.bh-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Paid card ── */
+.bh-card-paid {
+  background: rgba(255, 255, 255, 0.15);
+  flex: 1;
+}
+
+/* ── Pending card — darker to stand out ── */
+.bh-card-pending {
+  background: rgba(30, 40, 100, 0.35);
+  flex: 1;
+}
+
+.bh-pending-value {
+  font-size: 1.3rem;
+}
+
+/* ── Grid layout ── */
+.bh-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── Bigger screens — payable takes most space, right col shrinks to fit ── */
+@media (min-width: 768px) {
+  .bh-grid {
+    grid-template-columns: 1fr auto;
+    align-items: stretch;
+  }
+
+  .bh-right-col {
+    flex-direction: column;
+    min-width: 160px;
+  }
+
+  .bh-card-payable {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .bh-card-value {
+    font-size: 1.5rem;
+  }
+
+  .bh-pending-value {
+    font-size: 1.4rem;
+  }
+
+  .bh-container {
+    padding: 22px 22px 24px;
+  }
+
+  .bh-title {
+    font-size: 1.2rem;
+  }
+}
