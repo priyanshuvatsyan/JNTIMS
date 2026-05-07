@@ -3,7 +3,7 @@
  * This module provides CRUD operations for the 'companies' collection in Firestore.
  */
 
-import { collection, addDoc,limit, getDocs,getDoc,Timestamp,writeBatch ,deleteDoc, updateDoc, doc, serverTimestamp,query, where,orderBy, startAt, endAt  } from "firebase/firestore";
+import { collection, addDoc, limit, getDocs, getDoc, Timestamp, writeBatch, deleteDoc, updateDoc, doc, serverTimestamp, query, where, orderBy, startAt, endAt } from "firebase/firestore";
 import { db } from "../../firebase.js";
 
 
@@ -19,7 +19,7 @@ const companiesCollection = collection(db, "companies");
  * @returns {Promise<Object>} A promise that resolves to the added company object with its ID.
  * @throws {Error} If the company name is missing or invalid.
  */
-export async function addCompany(company) { 
+export async function addCompany(company) {
   if (!company?.name?.trim()) {
     throw new Error("Company name is required");
   }
@@ -117,6 +117,8 @@ export async function addStockArrivalDate(data) {
     companyId,
     amount: Number(amount),
     arrivalDate: new Date(arrivalDate), // Firestore will convert to Timestamp
+    isPaid: false,    // Track payment status
+    paidAt: null,     // Track payment date
     createdAt: serverTimestamp(),
   };
 
@@ -127,6 +129,8 @@ export async function addStockArrivalDate(data) {
     companyId,
     amount: Number(amount),
     arrivalDate: new Date(arrivalDate), // Return JS Date for consistency
+    isPaid: false,    // Track payment status
+    paidAt: null,     // Track payment date
     createdAt: new Date(),
   };
 }
@@ -220,7 +224,7 @@ export async function addStock(data) {
     getDoc(doc(db, 'stockArrivalDate', entryId)),
   ]);
 
-    if (!companySnap.exists()) throw new Error('Company not found');
+  if (!companySnap.exists()) throw new Error('Company not found');
   if (!dateSnap.exists()) throw new Error('Stock arrival date not found');
 
   const companyName = companySnap.data().name;
@@ -269,8 +273,8 @@ export async function addStock(data) {
     companyId,
     entryId,
 
-    companyName,   
-    arrivalDate,   
+    companyName,
+    arrivalDate,
 
     productName: productName.trim(),
 
@@ -524,4 +528,94 @@ export async function getTodaysSalesStats() {
   });
 
   return { todaysSales, unitsSold, transactions };
+}
+
+export async function getBillsStats() {
+  const [companiesSnap, datesSnap] = await Promise.all([
+    getDocs(companiesCollection),
+    getDocs(stockArrivalDateCollection),
+  ]);
+
+  // Build companies map for name lookup
+  const companiesMap = {};
+  companiesSnap.forEach(doc => {
+    companiesMap[doc.id] = { id: doc.id, ...doc.data() };
+  });
+
+  let totalPayable = 0;
+  let totalPaid = 0;
+  let pendingItems = 0;
+  const companyTotals = {};
+
+  datesSnap.forEach(doc => {
+    const data = doc.data();
+    const amount = data.amount || 0;
+
+    if (data.isPaid) {
+      totalPaid += amount;
+    } else {
+      totalPayable += amount;
+      pendingItems += 1;
+
+      if (!companyTotals[data.companyId]) {
+        companyTotals[data.companyId] = {
+          companyId: data.companyId,
+          companyName: companiesMap[data.companyId]?.name || 'Unknown',
+          totalPending: 0,
+          pendingEntries: 0,
+        };
+      }
+      companyTotals[data.companyId].totalPending += amount;
+      companyTotals[data.companyId].pendingEntries += 1;
+    }
+  });
+
+  return {
+    totalPayable,
+    totalPaid,
+    pendingItems,
+    companiesCount: Object.keys(companyTotals).length,
+    companiesList: Object.values(companyTotals),
+  };
+}
+
+export async function getOutstandingBalances() {
+  const [companiesSnap, datesSnap] = await Promise.all([
+    getDocs(companiesCollection),
+    getDocs(stockArrivalDateCollection),
+  ]);
+
+  const companiesMap = {};
+  companiesSnap.forEach(doc => {
+    companiesMap[doc.id] = { id: doc.id, ...doc.data() };
+  });
+
+  const balances = {};
+
+  datesSnap.forEach(doc => {
+    const data = doc.data();
+    if (!data.isPaid) {
+      const companyId = data.companyId;
+      if (!balances[companyId]) {
+        balances[companyId] = {
+          companyId,
+          companyName: companiesMap[companyId]?.name || 'Unknown',
+          totalDue: 0,
+        };
+      }
+      balances[companyId].totalDue += data.amount || 0;
+    }
+  });
+
+  return Object.values(balances).sort((a, b) => b.totalDue - a.totalDue);
+}
+
+// Mark a stockArrivalDate entry as paid
+export async function markEntryAsPaid(entryId) {
+  if (!entryId) throw new Error("Entry ID is required");
+  const entryDoc = doc(db, 'stockArrivalDate', entryId);
+  await updateDoc(entryDoc, {
+    isPaid: true,
+    paidAt: serverTimestamp(),
+  });
 }

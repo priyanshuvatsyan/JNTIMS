@@ -1,0 +1,60 @@
+.pd-container {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  padding: 14px 16px;
+}
+
+.pd-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin: 0 0 12px 0;
+}
+
+.pd-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.pd-list::-webkit-scrollbar {
+  display: none;
+}
+
+.pd-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #efefef;
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 100px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.pd-company {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #444;
+  white-space: nowrap;
+}
+
+.pd-amount {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e53935;
+}
+
+.pd-loading,
+.pd-empty {
+  font-size: 0.82rem;
+  color: #bbb;
+  margin: 0;
+}
