@@ -642,37 +642,46 @@ export async function makePayment({ companyId, amount, paymentDate = null, check
   if (!companyId) throw new Error("Company ID is required");
   if (!amount || amount <= 0) throw new Error("Amount must be greater than 0");
 
-  // Fetch company name for denormalization
   const companySnap = await getDoc(doc(db, 'companies', companyId));
   if (!companySnap.exists()) throw new Error("Company not found");
   const companyName = companySnap.data().name;
 
-  // Get all unpaid/partial entries for this company, oldest first (FIFO)
-  const q = query(
-    stockArrivalDateCollection,
-    where('companyId', '==', companyId),
-    where('isPaid', '==', false),
-    orderBy('arrivalDate', 'asc')
-  );
+  // Fetch both collections in parallel
+  const [stockSnap, manualSnap] = await Promise.all([
+    getDocs(query(
+      stockArrivalDateCollection,
+      where('companyId', '==', companyId),
+      where('isPaid', '==', false),
+      orderBy('arrivalDate', 'asc')
+    )),
+    getDocs(query(
+      manualDuesCollection,
+      where('companyId', '==', companyId),
+      where('isPaid', '==', false),
+      orderBy('dueDate', 'asc')
+    )),
+  ]);
 
-  const snapshot = await getDocs(q);
-  const entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  const stockEntries = stockSnap.docs.map(d => ({ id: d.id, _col: 'stockArrivalDate', ...d.data() }));
+  const manualEntries = manualSnap.docs.map(d => ({ id: d.id, _col: 'manualDues', ...d.data() }));
 
-  if (entries.length === 0) throw new Error("No pending dues for this company");
+  // Stock first, manual after — change order here if you want manual first
+const allEntries = [...manualEntries, ...stockEntries];
+
+  if (allEntries.length === 0) throw new Error("No pending dues for this company");
 
   const batch = writeBatch(db);
   let remaining = amount;
   const entriesCleared = [];
 
-  // Apply payment FIFO
-  for (const entry of entries) {
+  for (const entry of allEntries) {
     if (remaining <= 0) break;
 
     const entryRemaining = entry.remainingAmount ?? entry.amount;
+    const entryRef = doc(db, entry._col, entry.id);
 
     if (remaining >= entryRemaining) {
-      // Fully clears this entry
-      batch.update(doc(db, 'stockArrivalDate', entry.id), {
+      batch.update(entryRef, {
         paidAmount: entry.amount,
         remainingAmount: 0,
         isPaid: true,
@@ -681,8 +690,7 @@ export async function makePayment({ companyId, amount, paymentDate = null, check
       entriesCleared.push(entry.id);
       remaining -= entryRemaining;
     } else {
-      // Partially pays this entry
-      batch.update(doc(db, 'stockArrivalDate', entry.id), {
+      batch.update(entryRef, {
         paidAmount: (entry.paidAmount || 0) + remaining,
         remainingAmount: entryRemaining - remaining,
         isPaid: false,
@@ -691,9 +699,7 @@ export async function makePayment({ companyId, amount, paymentDate = null, check
     }
   }
 
-  // Save payment record
   const paymentRef = doc(collection(db, 'payments'));
-
   batch.set(paymentRef, {
     companyId,
     companyName,
@@ -711,11 +717,10 @@ export async function makePayment({ companyId, amount, paymentDate = null, check
   return {
     success: true,
     amountApplied: amount,
-    excessAmount: remaining > 0 ? remaining : 0, // if paid more than owed
+    excessAmount: remaining > 0 ? remaining : 0,
     entriesCleared,
   };
 }
-
 export async function getPaymentHistory(limitCount = 50) {
   const q = query(
     collection(db, 'payments'),
