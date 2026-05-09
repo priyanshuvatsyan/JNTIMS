@@ -1,0 +1,23 @@
+.SearchStock {
+display: flex;
+  align-items: center;
+  position: relative;
+  top: -30px;
+  justify-content: center;
+  justify-content: center;
+}
+
+.SearchStock input {
+  width: 90%;
+  padding: 10px 10px 10px 45px;
+  border: 1px solid #cccccc6e;
+  outline: none;
+  border-radius: 15px;
+  font-size: 16px;
+  background-color: rgb(255, 255, 255);
+  height: 50px;
+}
+input::placeholder {
+  color: #a1a1a1;
+  font-size: 14px;
+}

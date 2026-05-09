@@ -1,0 +1,21 @@
+.bills-fab {
+  position: fixed;
+  bottom: 80px; /* above nav */
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #4c6ef5;
+  color: #fff;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(76, 110, 245, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.bills-fab:hover { background: #3b5bdb; transform: scale(1.05); }

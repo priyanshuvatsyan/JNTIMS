@@ -1,0 +1,433 @@
+.sell-items-container {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+
+}
+
+/* ── Search ── */
+.sell-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.sell-search-icon {
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.sell-search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+  color: #333;
+  background: transparent;
+}
+
+.sell-search-input::placeholder {
+  color: #bbb;
+}
+
+/* ── List ── */
+.sell-items-list {
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.sell-state-msg {
+  padding: 32px;
+  text-align: center;
+  color: #bbb;
+  font-size: 0.875rem;
+}
+
+/* ── Item wrapper ── */
+.sell-item-wrapper {
+  border-bottom: 1px solid #f7f7f7;
+}
+
+.sell-item-wrapper.expanded {
+  background: #f9fffe;
+  border-bottom: 1px solid #e0f5ec;
+}
+
+.sell-item-wrapper .sell-item-row {
+  border-bottom: none;
+}
+
+/* ── Row ── */
+.sell-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.sell-item-row:hover:not(.disabled) {
+  background: #f9fffe;
+}
+
+.sell-item-row.active {
+  background: #f9fffe;
+}
+
+.sell-item-row.disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* ── Left ── */
+.sell-item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sell-item-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #e8faf2;
+  color: #27ae60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sell-item-icon.out {
+  background: #f2f2f2;
+  color: #bbb;
+}
+
+.sell-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sell-item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.sell-item-name.muted {
+  color: #aaa;
+}
+
+.sell-item-details {
+  font-size: 0.75rem;
+  color: #afafaf;
+}
+
+/* ── Right ── */
+.sell-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.sell-item-wrapper.expanded .sell-item-right {
+  margin-right: 28px;
+}
+
+.sell-item-price {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.sell-item-price.muted {
+  color: #aaa;
+}
+
+.sell-item-qty {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sell-item-qty.in  { color: #27ae60; }
+.sell-item-qty.low { color: #f39c12; }
+.sell-item-qty.out { color: #e74c3c; }
+
+/* ── Close btn ── */
+.sell-close-btn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aaa;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.sell-close-btn:hover { color: #555; }
+
+/* ── Expanded Panel ── */
+.sell-panel {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sell-panel-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sell-panel-units {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #27ae60;
+  background: #e8faf2;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.sell-panel-each {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* ── Quantity ── */
+.sell-qty-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.sell-qty-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sell-qty-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.sell-qty-btn:hover:not(:disabled) {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.sell-qty-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sell-qty-input {
+  flex: 1;
+  height: 36px;
+  border: 1px solid #e8faf2;
+  border-radius: 8px;
+  background: #f0fdf6;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222;
+  outline: none;
+}
+
+.sell-qty-input::-webkit-inner-spin-button,
+.sell-qty-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+/* ── Quick qty presets ── */
+.sell-quick-qtys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.sell-quick-qty-btn {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sell-quick-qty-btn:hover:not(:disabled) {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.sell-quick-qty-btn.active {
+  background: #27ae60;
+  border-color: #27ae60;
+  color: #fff;
+}
+
+.sell-quick-qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Buyer input ── */
+.sell-buyer-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.sell-buyer-input:focus {
+  border-color: #27ae60;
+}
+
+.sell-buyer-input::placeholder {
+  color: #bbb;
+}
+
+/* ── Footer ── */
+.sell-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0fdf6;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 4px;
+}
+
+.sell-subtotal {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sell-subtotal-calc {
+  font-size: 0.78rem;
+  color: #888;
+}
+
+.sell-subtotal-total {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.sell-subtotal-label {
+  font-size: 0.72rem;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Sell button ── */
+.sell-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sell-btn:hover:not(:disabled) {
+  background: #219a52;
+}
+
+.sell-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sell-btn.success {
+  background: #16a34a;
+}
+
+.sell-btn.loading {
+  background: #5cb88a;
+}
+
+/* ── Error ── */
+.sell-error {
+  font-size: 0.8rem;
+  color: #e74c3c;
+  margin: 0;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .sell-item-row {
+    padding: 10px 14px;
+  }
+
+  .sell-panel {
+    padding: 0 14px 16px;
+  }
+
+  .sell-item-name {
+    font-size: 0.82rem;
+  }
+
+  .sell-item-price {
+    font-size: 0.82rem;
+  }
+
+  .sell-items-list {
+    max-height: 500px;
+  }
+
+  .sell-subtotal-total {
+    font-size: 1rem;
+  }
+
+  .sell-btn {
+    padding: 10px 18px;
+    font-size: 0.85rem;
+  }
+}
