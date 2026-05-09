@@ -1,20 +1,9 @@
-1. stock amount in add stock page and total bill (calculated while adding the stock items) are 2 saperate   
-    variable which can cause issues
+1. payment history is not being deleted, will cause issue in long term as db storage is limited
 
-2. Data is not being deleted from DB 
+2. one component data update, update all its related components 
 
-3. Sales are not visible 
+3. sales record is not being delete even when company is deleted
 
-4. figure out how payments are baing made, stored and calculated 
+4. (3) (1) sales history is not being deleted, will cause issue in long term as db storage is limited
 
-5. figure out how Revenue and profits are baing made, stored and calculated 
-
-6. * Redesign the entire DB
-
-7.  (1) Inconsistency in amount and totalpayable in DB (both are doing the same task)
-
-8. (7)On site load add amounts are being calculated to comulativePaid(PaymentDetails.jsx)   
-
-9.  {done} fix all stock items page (sold) selling logic (something is wrong with sell button) and style
-
-10. check is manual amount and ckk details are being added in DB (something is not right there)
+5. add statisrics display limit eg. total paid till cuuent month and all

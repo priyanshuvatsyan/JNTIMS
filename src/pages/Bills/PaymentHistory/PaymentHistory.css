@@ -1,0 +1,132 @@
+.ph-container {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.ph-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f7f7f7;
+}
+
+.ph-state {
+  padding: 32px;
+  text-align: center;
+  color: #bbb;
+  font-size: 0.875rem;
+}
+
+/* ── List ── */
+.ph-list {
+  overflow-y: auto;
+  max-height: 420px;
+}
+
+/* ── Row ── */
+.ph-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f7f7f7;
+  transition: background 0.15s;
+}
+
+.ph-row:last-child { border-bottom: none; }
+.ph-row:hover { background: #fafafa; }
+
+/* ── Icon ── */
+.ph-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Info ── */
+.ph-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ph-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ph-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ph-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.ph-date {
+  font-size: 0.72rem;
+  color: #aaa;
+}
+
+.ph-check {
+  font-size: 0.72rem;
+  color: #aaa;
+  font-family: monospace;
+}
+
+/* ── Right ── */
+.ph-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.ph-amount {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.ph-status {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.ph-status.paid  { color: #27ae60; }
+.ph-status.pending { color: #f39c12; }
+.ph-status.failed  { color: #e53935; }
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .ph-row { padding: 10px 14px; gap: 10px; }
+  .ph-name { font-size: 0.82rem; }
+  .ph-amount { font-size: 0.82rem; }
+}

@@ -119,6 +119,8 @@ export async function addStockArrivalDate(data) {
     arrivalDate: new Date(arrivalDate), // Firestore will convert to Timestamp
     isPaid: false,    // Track payment status
     paidAt: null,     // Track payment date
+    paidAmount: 0,
+    remainingAmount: Number(amount),  // starts equal to amount
     createdAt: serverTimestamp(),
   };
 
@@ -580,9 +582,10 @@ export async function getBillsStats() {
 }
 
 export async function getOutstandingBalances() {
-  const [companiesSnap, datesSnap] = await Promise.all([
+  const [companiesSnap, datesSnap, manualSnap] = await Promise.all([
     getDocs(companiesCollection),
     getDocs(stockArrivalDateCollection),
+    getDocs(query(manualDuesCollection, where('isPaid', '==', false))), // 👈 add
   ]);
 
   const companiesMap = {};
@@ -592,6 +595,7 @@ export async function getOutstandingBalances() {
 
   const balances = {};
 
+  // Stock arrival dues
   datesSnap.forEach(doc => {
     const data = doc.data();
     if (!data.isPaid) {
@@ -603,13 +607,26 @@ export async function getOutstandingBalances() {
           totalDue: 0,
         };
       }
-      balances[companyId].totalDue += data.amount || 0;
+      balances[companyId].totalDue += data.remainingAmount ?? data.amount ?? 0;
     }
+  });
+
+  // Manual dues 👈 add this block
+  manualSnap.forEach(doc => {
+    const data = doc.data();
+    const companyId = data.companyId;
+    if (!balances[companyId]) {
+      balances[companyId] = {
+        companyId,
+        companyName: companiesMap[companyId]?.name || 'Unknown',
+        totalDue: 0,
+      };
+    }
+    balances[companyId].totalDue += data.remainingAmount ?? data.amount ?? 0;
   });
 
   return Object.values(balances).sort((a, b) => b.totalDue - a.totalDue);
 }
-
 // Mark a stockArrivalDate entry as paid
 export async function markEntryAsPaid(entryId) {
   if (!entryId) throw new Error("Entry ID is required");
@@ -618,4 +635,118 @@ export async function markEntryAsPaid(entryId) {
     isPaid: true,
     paidAt: serverTimestamp(),
   });
+}
+
+//payments
+export async function makePayment({ companyId, amount, paymentDate = null, checkNumber = null, note = '', paymentMode = 'cash' }) {
+  if (!companyId) throw new Error("Company ID is required");
+  if (!amount || amount <= 0) throw new Error("Amount must be greater than 0");
+
+  // Fetch company name for denormalization
+  const companySnap = await getDoc(doc(db, 'companies', companyId));
+  if (!companySnap.exists()) throw new Error("Company not found");
+  const companyName = companySnap.data().name;
+
+  // Get all unpaid/partial entries for this company, oldest first (FIFO)
+  const q = query(
+    stockArrivalDateCollection,
+    where('companyId', '==', companyId),
+    where('isPaid', '==', false),
+    orderBy('arrivalDate', 'asc')
+  );
+
+  const snapshot = await getDocs(q);
+  const entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (entries.length === 0) throw new Error("No pending dues for this company");
+
+  const batch = writeBatch(db);
+  let remaining = amount;
+  const entriesCleared = [];
+
+  // Apply payment FIFO
+  for (const entry of entries) {
+    if (remaining <= 0) break;
+
+    const entryRemaining = entry.remainingAmount ?? entry.amount;
+
+    if (remaining >= entryRemaining) {
+      // Fully clears this entry
+      batch.update(doc(db, 'stockArrivalDate', entry.id), {
+        paidAmount: entry.amount,
+        remainingAmount: 0,
+        isPaid: true,
+        paidAt: serverTimestamp(),
+      });
+      entriesCleared.push(entry.id);
+      remaining -= entryRemaining;
+    } else {
+      // Partially pays this entry
+      batch.update(doc(db, 'stockArrivalDate', entry.id), {
+        paidAmount: (entry.paidAmount || 0) + remaining,
+        remainingAmount: entryRemaining - remaining,
+        isPaid: false,
+      });
+      remaining = 0;
+    }
+  }
+
+  // Save payment record
+  const paymentRef = doc(collection(db, 'payments'));
+
+  batch.set(paymentRef, {
+    companyId,
+    companyName,
+    amount,
+    paymentDate: paymentDate ? new Date(paymentDate) : serverTimestamp(),
+    checkNumber: checkNumber || null,
+    note: note?.trim() || null,
+    paymentMode,
+    entriesCleared,
+    createdAt: serverTimestamp(),
+  });
+
+  await batch.commit();
+
+  return {
+    success: true,
+    amountApplied: amount,
+    excessAmount: remaining > 0 ? remaining : 0, // if paid more than owed
+    entriesCleared,
+  };
+}
+
+export async function getPaymentHistory(limitCount = 50) {
+  const q = query(
+    collection(db, 'payments'),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+const manualDuesCollection = collection(db, 'manualDues');
+export async function addManualDue({ companyId, amount, note }) {
+  if (!companyId) throw new Error('Company ID is required');
+  if (!amount || amount <= 0) throw new Error('Amount must be greater than 0');
+
+  const companySnap = await getDoc(doc(db, 'companies', companyId));
+  if (!companySnap.exists()) throw new Error('Company not found');
+
+  const newDue = {
+    companyId,
+    companyName: companySnap.data().name,
+    amount: Number(amount),
+    remainingAmount: Number(amount),
+    paidAmount: 0,
+    isPaid: false,
+    paidAt: null,
+    note: note?.trim() || null,
+    dueDate: new Date(),
+    createdAt: serverTimestamp(),
+  };
+
+  const docRef = await addDoc(manualDuesCollection, newDue);
+  return { id: docRef.id, ...newDue };
 }

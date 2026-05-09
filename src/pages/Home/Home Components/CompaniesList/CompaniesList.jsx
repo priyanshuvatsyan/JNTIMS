@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaBuilding } from "react-icons/fa";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import './CompaniesList.css';
-import { getCompanies, deleteCompany,getOutstandingBalances } from '../../../../Database/apis';
+import { getCompanies, deleteCompany, getOutstandingBalances } from '../../../../Database/apis';
 
 export default function CompaniesList({ searchTerm }) {
     const [openId, setOpenId] = useState(null);
@@ -14,21 +14,21 @@ export default function CompaniesList({ searchTerm }) {
     const [error, setError] = useState(null);
     const [balancesMap, setBalancesMap] = useState({});
 
-  useEffect(() => {
-    const fetchBalances = async () => {
-      try {
-        const data = await getOutstandingBalances();
-        const map = data.reduce((acc, b) => {
-          acc[b.companyId] = b.totalDue;
-          return acc;
-        }, {});
-        setBalancesMap(map);
-      } catch (err) {
-        console.error('Failed to fetch balances:', err);
-      }
-    };
-    fetchBalances();
-  }, []);
+    useEffect(() => {
+        const fetchBalances = async () => {
+            try {
+                const data = await getOutstandingBalances();
+                const map = data.reduce((acc, b) => {
+                    acc[b.companyId] = b.totalDue;
+                    return acc;
+                }, {});
+                setBalancesMap(map);
+            } catch (err) {
+                console.error('Failed to fetch balances:', err);
+            }
+        };
+        fetchBalances();
+    }, []);
 
 
     useEffect(() => {
@@ -165,11 +165,11 @@ export default function CompaniesList({ searchTerm }) {
                             <div className="paymentinfo">
                                 <div className="paymentinfo-left">
                                     <p>Balance Payable</p>
-                                   <h3 style={{ color: balancesMap[company.id] ? '#e53935' : '#27ae60' }}>
-    {balancesMap[company.id]
-      ? `₹${balancesMap[company.id].toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
-      : 'Cleared'}
-  </h3>
+                                    <h3 style={{ color: balancesMap[company.id] ? '#e53935' : '#27ae60' }}>
+                                        {balancesMap[company.id]
+                                            ? `₹${balancesMap[company.id].toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                                            : 'Cleared'}
+                                    </h3>
                                 </div>
 
                                 <div className="paymentinfo-right">
