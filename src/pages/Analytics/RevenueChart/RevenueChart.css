@@ -1,0 +1,75 @@
+.rc-container {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  padding: 16px;
+}
+
+.rc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rc-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.rc-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rc-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.rc-legend-label {
+  font-size: 0.72rem;
+  color: #888;
+  margin-right: 6px;
+}
+
+.rc-skeleton {
+  height: 220px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: rc-shimmer 1.2s infinite;
+}
+
+@keyframes rc-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.rc-empty {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: 0.875rem;
+}
+
+.rc-tooltip {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.rc-tooltip-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 4px 0;
+}
