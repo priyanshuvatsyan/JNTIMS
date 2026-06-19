@@ -89,6 +89,65 @@ export async function deleteCompany(companyId) {
 }
 
 /**
+ * Delete only the company-related data (stockData and stockArrivalDate)
+ * but keep the company document itself.
+ */
+export async function deleteCompanyData(companyId) {
+  if (!companyId) throw new Error("Company ID is required");
+
+  try {
+    const stockQuery = query(
+      stockDataCollection,
+      where("companyId", "==", companyId)
+    );
+
+    const stockSnapshot = await getDocs(stockQuery);
+    await Promise.all(stockSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+
+    const arrivalQuery = query(
+      stockArrivalDateCollection,
+      where("companyId", "==", companyId)
+    );
+
+    const arrivalSnapshot = await getDocs(arrivalQuery);
+    await Promise.all(arrivalSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+    // Delete manual dues (balance payable)
+    try {
+      const manualQuery = query(manualDuesCollection, where('companyId', '==', companyId));
+      const manualSnap = await getDocs(manualQuery);
+      await Promise.all(manualSnap.docs.map(doc => deleteDoc(doc.ref)));
+    } catch (err) {
+      // if manualDuesCollection is not yet defined or empty, ignore
+      console.warn('manual dues deletion warning', err);
+    }
+
+    // Delete payments and sales related to this company
+    try {
+      const paymentsCol = collection(db, 'payments');
+      const paymentsQuery = query(paymentsCol, where('companyId', '==', companyId));
+      const paymentsSnap = await getDocs(paymentsQuery);
+      await Promise.all(paymentsSnap.docs.map(doc => deleteDoc(doc.ref)));
+    } catch (err) {
+      console.warn('payments deletion warning', err);
+    }
+
+    try {
+      const salesCol = collection(db, 'sales');
+      const salesQuery = query(salesCol, where('companyId', '==', companyId));
+      const salesSnap = await getDocs(salesQuery);
+      await Promise.all(salesSnap.docs.map(doc => deleteDoc(doc.ref)));
+    } catch (err) {
+      console.warn('sales deletion warning', err);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to delete company data:', error);
+    throw error;
+  }
+}
+
+/**
  * Updates an existing company in the Firestore 'companies' collection.
  * @param {string} companyId - The ID of the company to update.
  * @param {Object} data - The data to update (e.g., { name: "New Name", phone: "123-456" }).
@@ -754,4 +813,119 @@ export async function addManualDue({ companyId, amount, note }) {
 
   const docRef = await addDoc(manualDuesCollection, newDue);
   return { id: docRef.id, ...newDue };
+}
+
+
+//analytics calculations
+export async function getAnalyticsStats(months = 6) {
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - months);
+  startDate.setHours(0, 0, 0, 0);
+
+  // Fetch all three in parallel
+  const [salesSnap, stockSnap, companiesSnap] = await Promise.all([
+    getDocs(query(
+      collection(db, 'sales'),
+      where('timestamp', '>=', Timestamp.fromDate(startDate)),
+      orderBy('timestamp', 'asc')
+    )),
+    getDocs(stockDataCollection),
+    getDocs(companiesCollection),
+  ]);
+
+  // ── Sales stats ──
+  let totalRevenue = 0;
+  let totalProfit = 0;
+  let totalCost = 0;
+  let unitsSold = 0;
+  let transactions = 0;
+
+  // For chart — group by month
+  const monthlyMap = {};
+
+  salesSnap.forEach(doc => {
+    const s = doc.data();
+    totalRevenue += s.totalRevenue || 0;
+    totalProfit  += s.totalProfit  || 0;
+    totalCost    += s.totalCost    || 0;
+    unitsSold    += s.quantitySold || 0;
+    transactions += 1;
+
+    // Group by month for chart
+    const date = s.timestamp?.toDate?.() || new Date();
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthlyMap[key]) monthlyMap[key] = { month: key, revenue: 0, profit: 0 };
+    monthlyMap[key].revenue += s.totalRevenue || 0;
+    monthlyMap[key].profit  += s.totalProfit  || 0;
+  });
+
+  const monthlyData = Object.values(monthlyMap).sort((a, b) => a.month.localeCompare(b.month));
+  const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+  
+
+  // ── Stock stats ──
+  let totalStock = 0;
+  let lowStock = 0;
+  let outOfStock = 0;
+  const activeCompanyIds = new Set();
+
+  stockSnap.forEach(doc => {
+    const s = doc.data();
+    totalStock += s.remainingQty || 0;
+    if (s.remainingQty === 0) outOfStock += 1;
+    if (s.remainingQty > 0 && s.remainingQty <= 5) lowStock += 1;
+    if (s.remainingQty > 0) activeCompanyIds.add(s.companyId);
+  });
+
+  // ── Company stats ──
+  const totalCompanies = companiesSnap.size;
+  const activeCompanies = activeCompanyIds.size;
+
+  // ── Stock Movement ──
+const stockMovementMap = {};
+
+  // Stock IN — from stockData createdAt
+stockSnap.forEach(doc => {
+  const s = doc.data();
+  const date = s.createdAt?.toDate?.() || new Date();
+  if (date >= startDate) {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!stockMovementMap[key]) stockMovementMap[key] = { month: key, in: 0, out: 0 };
+    stockMovementMap[key].in += s.totalUnits || 0;
+  }
+});
+
+// Stock OUT — from sales quantitySold (already fetched in salesSnap)
+salesSnap.forEach(doc => {
+  const s = doc.data();
+  const date = s.timestamp?.toDate?.() || new Date();
+  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  if (!stockMovementMap[key]) stockMovementMap[key] = { month: key, in: 0, out: 0 };
+  stockMovementMap[key].out += s.quantitySold || 0;
+});
+
+const stockMovementData = Object.values(stockMovementMap)
+  .sort((a, b) => a.month.localeCompare(b.month));
+
+
+  return {
+    // Cards
+    totalRevenue,
+    totalProfit,
+    totalCost,
+    profitMargin,
+    unitsSold,
+    transactions,
+    totalStock,
+    lowStock,
+    outOfStock,
+    totalCompanies,
+    activeCompanies,
+
+    // Chart
+    monthlyData, // [{ month: "2026-01", revenue: 50000, profit: 12000 }, ...]
+
+    stockMovementData, // [{ month: "2026-01", in: 450, out: 320 }, ...]
+  };
 }

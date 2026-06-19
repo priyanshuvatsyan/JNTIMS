@@ -1,0 +1,29 @@
+.af-container {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.af-btn {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.af-btn.active {
+  background: #3b5bdb;
+  border-color: #3b5bdb;
+  color: #fff;
+  font-weight: 600;
+}
+
+.af-btn:hover:not(.active) {
+  border-color: #3b5bdb;
+  color: #3b5bdb;
+}
