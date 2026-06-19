@@ -89,6 +89,65 @@ export async function deleteCompany(companyId) {
 }
 
 /**
+ * Delete only the company-related data (stockData and stockArrivalDate)
+ * but keep the company document itself.
+ */
+export async function deleteCompanyData(companyId) {
+  if (!companyId) throw new Error("Company ID is required");
+
+  try {
+    const stockQuery = query(
+      stockDataCollection,
+      where("companyId", "==", companyId)
+    );
+
+    const stockSnapshot = await getDocs(stockQuery);
+    await Promise.all(stockSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+
+    const arrivalQuery = query(
+      stockArrivalDateCollection,
+      where("companyId", "==", companyId)
+    );
+
+    const arrivalSnapshot = await getDocs(arrivalQuery);
+    await Promise.all(arrivalSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+    // Delete manual dues (balance payable)
+    try {
+      const manualQuery = query(manualDuesCollection, where('companyId', '==', companyId));
+      const manualSnap = await getDocs(manualQuery);
+      await Promise.all(manualSnap.docs.map(doc => deleteDoc(doc.ref)));
+    } catch (err) {
+      // if manualDuesCollection is not yet defined or empty, ignore
+      console.warn('manual dues deletion warning', err);
+    }
+
+    // Delete payments and sales related to this company
+    try {
+      const paymentsCol = collection(db, 'payments');
+      const paymentsQuery = query(paymentsCol, where('companyId', '==', companyId));
+      const paymentsSnap = await getDocs(paymentsQuery);
+      await Promise.all(paymentsSnap.docs.map(doc => deleteDoc(doc.ref)));
+    } catch (err) {
+      console.warn('payments deletion warning', err);
+    }
+
+    try {
+      const salesCol = collection(db, 'sales');
+      const salesQuery = query(salesCol, where('companyId', '==', companyId));
+      const salesSnap = await getDocs(salesQuery);
+      await Promise.all(salesSnap.docs.map(doc => deleteDoc(doc.ref)));
+    } catch (err) {
+      console.warn('sales deletion warning', err);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to delete company data:', error);
+    throw error;
+  }
+}
+
+/**
  * Updates an existing company in the Firestore 'companies' collection.
  * @param {string} companyId - The ID of the company to update.
  * @param {Object} data - The data to update (e.g., { name: "New Name", phone: "123-456" }).

@@ -3,6 +3,7 @@ import AnalyticsFilters from './AnalyticsFilters/AnalyticsFilters';
 import AnalyticsStats from './AnalyticsStats/AnalyticsStats';
 import RevenueChart from './RevenueChart/RevenueChart';
 import StockMovementChart from './StockMovementChart/StockMovementChart';
+import TopCompanies from './TopCompanies/TopCompanies';
 import { getAnalyticsStats } from '../../Database/apis';
 
 export default function Analytics() {
@@ -30,8 +31,10 @@ export default function Analytics() {
       <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1a1a2e', margin: 0 }}>Analytics</h1>
       <AnalyticsFilters selected={months} onChange={setMonths} />
       <AnalyticsStats stats={stats} loading={loading} />
+     
       <RevenueChart stats={stats} loading={loading} />
       <StockMovementChart stats={stats} loading={loading} />
+       <TopCompanies months={months} />
     </div>
   );
 }
