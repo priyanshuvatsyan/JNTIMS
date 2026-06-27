@@ -19,7 +19,7 @@ function getTimeLabel(timestamp) {
 }
 
 export default function RecentSoldItems() {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);

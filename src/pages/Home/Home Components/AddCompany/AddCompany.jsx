@@ -3,7 +3,7 @@ import { FiPlus } from 'react-icons/fi';
 import './AddCompany.css';
 import { addCompany } from '../../../../Database/apis';
 
-export default function AddCompany() {
+export default function AddCompany({ onSuccess }) {
 
   
   const [open, setOpen] = useState(false);
@@ -37,6 +37,7 @@ export default function AddCompany() {
 
       resetForm();
       setOpen(false);
+      if (onSuccess) onSuccess();
       setMessage('Company added successfully');
     } catch (error) {
       console.error('Failed to add company:', error);

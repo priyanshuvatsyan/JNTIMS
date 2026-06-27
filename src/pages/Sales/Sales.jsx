@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Nav from '../../components/Nav/Nav';
 import QuickSalesHeader from '../../pages/Sales/QuickSalesHeader/QuickSalesHeader';
 import SellItems from './SellItems/SellItems';
@@ -7,6 +8,8 @@ import { getTodaysSalesStats } from '../../Database/apis';
 import './Sales.css';
 
 export default function Sales() {
+    const location = useLocation();
+  const preselectStock = location.state?.preselectStock || null;
   const [stats, setStats] = useState({ todaysSales: 0, unitsSold: 0, transactions: 0 });
 
   const fetchStats = async () => {
@@ -30,7 +33,9 @@ export default function Sales() {
           unitsSold={stats.unitsSold}
           transactions={stats.transactions}
         />
-        <SellItems onSaleComplete={fetchStats} /> 
+        <SellItems onSaleComplete={fetchStats} 
+        preselectStock={preselectStock}
+        /> 
      
         <RecentSoldItems />
       

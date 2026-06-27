@@ -493,6 +493,44 @@ export async function searchStock(searchTerm) {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
+
+//cleanup old sales/payment records (older than 1 month) to keep the database lean
+export async function cleanupOldSales() {
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+  const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
+
+  const q = query(
+    collection(db, 'sales'),
+    where('timestamp', '<=', cutoffTimestamp)
+  );
+
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) return 0;
+
+  await Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)));
+  return snapshot.size;
+}
+
+export async function cleanupOldPayments() {
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - 1);
+  const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
+
+  const q = query(
+    collection(db, 'payments'),
+    where('createdAt', '<=', cutoffTimestamp)
+  );
+
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) return 0;
+
+  await Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)));
+  return snapshot.size;
+}
+
 export async function makeSale(data) {
   const { stockId, quantitySold, customerName } = data;
 
@@ -552,11 +590,13 @@ export async function makeSale(data) {
   batch.update(stockRef, { remainingQty: newRemainingQty });
 
   await batch.commit();
+  await cleanupOldSales();
 
   return { id: saleRef.id, ...saleData };
 }
 
 export async function getRecentSales(limitCount = 30) {
+  await cleanupOldSales();
   const q = query(
     collection(db, 'sales'),
     orderBy('timestamp', 'desc'),
@@ -569,6 +609,8 @@ export async function getRecentSales(limitCount = 30) {
 
 //get sales status for sales page header
 export async function getTodaysSalesStats() {
+  await cleanupOldSales();
+
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -772,6 +814,7 @@ const allEntries = [...manualEntries, ...stockEntries];
   });
 
   await batch.commit();
+  await cleanupOldPayments();
 
   return {
     success: true,
@@ -781,6 +824,8 @@ const allEntries = [...manualEntries, ...stockEntries];
   };
 }
 export async function getPaymentHistory(limitCount = 50) {
+  await cleanupOldPayments();
+
   const q = query(
     collection(db, 'payments'),
     orderBy('createdAt', 'desc'),
@@ -818,6 +863,8 @@ export async function addManualDue({ companyId, amount, note }) {
 
 //analytics calculations
 export async function getAnalyticsStats(months = 6) {
+  await cleanupOldSales();
+
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
   startDate.setHours(0, 0, 0, 0);
