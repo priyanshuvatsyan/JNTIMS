@@ -14,7 +14,7 @@ const capitalizeWords = (str) =>
 
 const QUICK_QTYS = [1, 5, 10, 25];
 
-export default function SellItems({ onSaleComplete }) {
+export default function SellItems({ onSaleComplete, preselectStock  }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +24,15 @@ export default function SellItems({ onSaleComplete }) {
   const [selling, setSelling] = useState(false);
   const [sellMessage, setSellMessage] = useState('');
   const debounceRef = useRef(null);
+
+//handle preselectStock from inventory page if provided  
+useEffect(() => {
+    if (preselectStock) {
+      setItems([preselectStock]); // show it in list
+      handleSelectItem(preselectStock); // auto-expand it
+      setLoading(false);
+    }
+  }, [preselectStock]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);

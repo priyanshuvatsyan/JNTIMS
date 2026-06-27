@@ -1,9 +1,12 @@
-1. payment history is not being deleted, will cause issue in long term as db storage is limited
+<!-- 1. payment history is not being deleted, will cause issue in long term as db storage is limited -->
 
-2. one component data update, update all its related components 
+<!-- 2. one component data update, update all its related components  (home page) -->
 
-3. sales record is not being delete even when company is deleted
+<!-- 3. sales record is not being delete even when company is deleted -->
 
-4. (3) (1) sales history is not being deleted, will cause issue in long term as db storage is limited
+<!-- 4. (3) (1) sales history is not being deleted, will cause issue in long term as db storage is limited -->
 
 5. add statisrics display limit eg. total paid till cuuent month and all
+
+<!-- 6. sell button in inventory is not redirecting to sales page   -->
+

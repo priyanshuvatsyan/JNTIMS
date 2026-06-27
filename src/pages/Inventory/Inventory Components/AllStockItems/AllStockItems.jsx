@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './AllStockItems.css';
 
 function getStockStatus(stock) {
@@ -15,12 +16,18 @@ export default function AllStockItems({ stocks, loading, error, onDelete, onEdit
   const [selectedStockId, setSelectedStockId] = useState(null);
   const [deleteTimer, setDeleteTimer] = useState(0);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (deleteTimer > 0) {
       const timer = setTimeout(() => setDeleteTimer(deleteTimer - 1), 1000);
       return () => clearTimeout(timer);
     }
   }, [deleteTimer]);
+
+  const handleSell = (stock) => {
+    navigate('/sales', { state: { preselectStock: stock } });
+  };
 
   const handleDeleteClick = (stockId) => {
     setSelectedStockId(stockId);
@@ -97,7 +104,7 @@ export default function AllStockItems({ stocks, loading, error, onDelete, onEdit
             <div className="actions">
               <button onClick={() => onEdit && onEdit(stock)}>Edit</button>
               <button className="delete" onClick={() => handleDeleteClick(stock.id)}>Delete</button>
-              <button className="sell">Sell</button>
+               <button className="sell" onClick={() => handleSell(stock)}>Sell</button>
             </div>
           </div>
         );

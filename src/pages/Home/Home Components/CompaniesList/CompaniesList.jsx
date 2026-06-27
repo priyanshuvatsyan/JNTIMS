@@ -4,7 +4,7 @@ import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import './CompaniesList.css';
 import { getCompanies, deleteCompany, deleteCompanyData, getOutstandingBalances } from '../../../../Database/apis';
 
-export default function CompaniesList({ searchTerm }) {
+export default function CompaniesList({ searchTerm, refreshKey }) {
     const [openId, setOpenId] = useState(null);
     const [deleteCompanyId, setDeleteCompanyId] = useState(null);
     const [deleteDataCompanyId, setDeleteDataCompanyId] = useState(null);
@@ -34,7 +34,7 @@ export default function CompaniesList({ searchTerm }) {
 
     useEffect(() => {
         fetchCompanies();
-    }, []);
+    }, [refreshKey]);
 
     useEffect(() => {
         if (!isCounting) return;
