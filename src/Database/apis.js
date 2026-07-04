@@ -860,6 +860,45 @@ export async function addManualDue({ companyId, amount, note }) {
   return { id: docRef.id, ...newDue };
 }
 
+export async function settleCompanyBalance(companyId) {
+  if (!companyId) throw new Error('Company ID is required');
+
+  const [stockSnap, manualSnap] = await Promise.all([
+    getDocs(query(
+      stockArrivalDateCollection,
+      where('companyId', '==', companyId),
+      where('isPaid', '==', false)
+    )),
+    getDocs(query(
+      manualDuesCollection,
+      where('companyId', '==', companyId),
+      where('isPaid', '==', false)
+    )),
+  ]);
+
+  const batch = writeBatch(db);
+
+  stockSnap.forEach(d => {
+    batch.update(doc(db, 'stockArrivalDate', d.id), {
+      isPaid: true,
+      paidAmount: d.data().amount,
+      remainingAmount: 0,
+      paidAt: serverTimestamp(),
+    });
+  });
+
+  manualSnap.forEach(d => {
+    batch.update(doc(db, 'manualDues', d.id), {
+      isPaid: true,
+      paidAmount: d.data().amount,
+      remainingAmount: 0,
+      paidAt: serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+}
+
 
 //analytics calculations
 export async function getAnalyticsStats(months = 6) {

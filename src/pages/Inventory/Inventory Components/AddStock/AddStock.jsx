@@ -21,19 +21,20 @@ export default function AddStock({ editStock = null, onEditClose }) {
   const [stockDates, setStockDates] = useState([]);
   const [companiesLoading, setCompaniesLoading] = useState(false);
 
-  //add stock arrival date dialog state
+  // Add stock arrival date dialog state
   const [dateCompanyName, setDateCompanyName] = useState('');
   const [arrivalDate, setArrivalDate] = useState('');
   const [dateAmount, setDateAmount] = useState('');
 
-  //add stock dialog state
+  // Add stock dialog state
   const [companyName, setCompanyName] = useState('');
   const [stockDateId, setStockDateId] = useState('');
   const [productName, setProductName] = useState('');
   const [boxes, setBoxes] = useState('');
   const [unitsPerBox, setUnitsPerBox] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
-  const [boxPriceWithoutGst, setBoxPriceWithoutGst] = useState('');
+  const [boxPriceInput, setBoxPriceInput] = useState(''); // raw input from user
+  const [priceMode, setPriceMode] = useState('without');  // 'without' | 'with'
   const GST_PERCENTAGE = 5;
 
   const [loading, setLoading] = useState(false);
@@ -53,7 +54,8 @@ export default function AddStock({ editStock = null, onEditClose }) {
       setBoxes(editStock.boxes || '');
       setUnitsPerBox(editStock.unitsPerBox || '');
       setSellingPrice(editStock.sellingPrice || '');
-      setBoxPriceWithoutGst(editStock.boxPriceWithoutGst || '');
+      setBoxPriceInput(editStock.boxPriceWithoutGst || '');
+      setPriceMode('without');
       if (editStock.companyId) {
         fetchStockDates(editStock.companyId);
       }
@@ -66,6 +68,18 @@ export default function AddStock({ editStock = null, onEditClose }) {
       setCompaniesLoading(true);
       const companiesList = await getCompanies();
       setCompanies(companiesList);
+
+      if (!editStock) {
+        const lastCompanyId = localStorage.getItem('lastCompanyId');
+        const lastStockDateId = localStorage.getItem('lastStockDateId');
+        if (lastCompanyId) {
+          setCompanyName(lastCompanyId);
+          fetchStockDates(lastCompanyId);
+        }
+        if (lastStockDateId) {
+          setStockDateId(lastStockDateId);
+        }
+      }
     } catch (error) {
       console.error('Error fetching companies:', error);
       setMessage('Failed to load companies');
@@ -93,20 +107,25 @@ export default function AddStock({ editStock = null, onEditClose }) {
     const selectedId = e.target.value;
     setCompanyName(selectedId);
     setStockDateId('');
+    localStorage.setItem('lastCompanyId', selectedId);
     const selectedCompany = companies.find(c => c.id === selectedId);
-    if (selectedCompany) {
-      fetchStockDates(selectedCompany.id);
-    }
+    if (selectedCompany) fetchStockDates(selectedCompany.id);
   };
 
   const resetStockForm = () => {
-    setCompanyName('');
-    setStockDateId('');
+    const lastCompanyId = localStorage.getItem('lastCompanyId');
+    const lastStockDateId = localStorage.getItem('lastStockDateId');
+
+    setCompanyName(lastCompanyId || '');
+    setStockDateId(lastStockDateId || '');
+    if (lastCompanyId) fetchStockDates(lastCompanyId);
+
     setProductName('');
     setBoxes('');
     setUnitsPerBox('');
     setSellingPrice('');
-    setBoxPriceWithoutGst('');
+    setBoxPriceInput('');
+    setPriceMode('without');
     setMessage('');
   };
 
@@ -119,9 +138,14 @@ export default function AddStock({ editStock = null, onEditClose }) {
 
   // UI Calculations (display only)
   const totalUnits = boxes && unitsPerBox ? Number(boxes) * Number(unitsPerBox) : 0;
-  const boxPrice = Number(boxPriceWithoutGst) || 0;
-  const gstRate = GST_PERCENTAGE;
-  const boxPriceWithGst = boxPrice * (1 + gstRate / 100);
+
+  // Derive boxPriceWithoutGst based on mode
+  const boxPriceWithoutGst = priceMode === 'with'
+    ? Number(boxPriceInput) / (1 + GST_PERCENTAGE / 100)
+    : Number(boxPriceInput);
+
+  const boxPrice = boxPriceWithoutGst || 0;
+  const boxPriceWithGst = boxPrice * (1 + GST_PERCENTAGE / 100);
   const perUnitPriceNoGst = Number(unitsPerBox) > 0 ? boxPrice / Number(unitsPerBox) : 0;
   const perUnitPriceWithGst = Number(unitsPerBox) > 0 ? boxPriceWithGst / Number(unitsPerBox) : 0;
 
@@ -130,18 +154,9 @@ export default function AddStock({ editStock = null, onEditClose }) {
     event.preventDefault();
     setMessage('');
 
-    if (!dateCompanyName.trim()) {
-      setMessage('Company is required');
-      return;
-    }
-    if (!arrivalDate) {
-      setMessage('Arrival date is required');
-      return;
-    }
-    if (!dateAmount || dateAmount <= 0) {
-      setMessage('Amount must be greater than 0');
-      return;
-    }
+    if (!dateCompanyName.trim()) { setMessage('Company is required'); return; }
+    if (!arrivalDate) { setMessage('Arrival date is required'); return; }
+    if (!dateAmount || dateAmount <= 0) { setMessage('Amount must be greater than 0'); return; }
 
     setLoading(true);
     try {
@@ -180,42 +195,30 @@ export default function AddStock({ editStock = null, onEditClose }) {
     if (!productName.trim()) { setMessage('Product name is required'); return; }
     if (!boxes || boxes <= 0) { setMessage('Number of boxes must be greater than 0'); return; }
     if (!unitsPerBox || unitsPerBox <= 0) { setMessage('Units per box must be greater than 0'); return; }
-    if (!boxPriceWithoutGst || boxPriceWithoutGst <= 0) { setMessage('Box price must be greater than 0'); return; }
+    if (!boxPriceInput || boxPriceWithoutGst <= 0) { setMessage('Box price must be greater than 0'); return; }
     if (!sellingPrice || sellingPrice <= 0) { setMessage('Selling price must be greater than 0'); return; }
 
     setLoading(true);
     try {
+      const payload = {
+        companyId: companyName,
+        entryId: stockDateId,
+        productName: productName.trim().toLowerCase(),
+        boxes: Number(boxes),
+        unitsPerBox: Number(unitsPerBox),
+        boxPriceWithoutGst: boxPriceWithoutGst, // always derived correctly
+        boxPriceWithGst,
+        unitPriceWithoutGst: perUnitPriceNoGst,
+        unitPriceWithGst: perUnitPriceWithGst,
+        sellingPrice: Number(sellingPrice),
+        gst: GST_PERCENTAGE,
+      };
+
       if (editStock) {
-        // EDIT MODE
-        await updateStock(editStock.id, {
-          companyId: companyName,
-          entryId: stockDateId,
-          productName: productName.trim().toLowerCase(),
-          boxes: Number(boxes),
-          unitsPerBox: Number(unitsPerBox),
-          boxPriceWithoutGst: Number(boxPriceWithoutGst),
-          boxPriceWithGst,
-          unitPriceWithoutGst: perUnitPriceNoGst,
-          unitPriceWithGst: perUnitPriceWithGst,
-          sellingPrice: Number(sellingPrice),
-          gst: GST_PERCENTAGE,
-        });
+        await updateStock(editStock.id, payload);
         setMessage('Stock updated successfully!');
       } else {
-        // ADD MODE
-        await addStock({
-          companyId: companyName,
-          entryId: stockDateId,
-          productName: productName.trim().toLowerCase(),
-          boxes: Number(boxes),
-          unitsPerBox: Number(unitsPerBox),
-          boxPriceWithoutGst: Number(boxPriceWithoutGst),
-          boxPriceWithGst,
-          unitPriceWithoutGst: perUnitPriceNoGst,
-          unitPriceWithGst: perUnitPriceWithGst,
-          sellingPrice: Number(sellingPrice),
-          gst: GST_PERCENTAGE,
-        });
+        await addStock(payload);
         setMessage('Stock added successfully!');
       }
 
@@ -289,7 +292,10 @@ export default function AddStock({ editStock = null, onEditClose }) {
               <div className="stock-date-wrapper">
                 <select
                   value={stockDateId}
-                  onChange={(e) => setStockDateId(e.target.value)}
+                  onChange={(e) => {
+                    setStockDateId(e.target.value);
+                    localStorage.setItem('lastStockDateId', e.target.value);
+                  }}
                   disabled={loading || !companyName}
                 >
                   <option value="">
@@ -359,26 +365,46 @@ export default function AddStock({ editStock = null, onEditClose }) {
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Box Price (without GST) *</label>
-              <input
-                type="number"
-                value={boxPriceWithoutGst}
-                onChange={(e) => setBoxPriceWithoutGst(e.target.value)}
-                placeholder="0"
-                disabled={loading}
-              />
-            </div>
-            <div className="form-group">
-              <label>GST %</label>
-              <input
-                type="text"
-                value={`${GST_PERCENTAGE}%`}
-                disabled
-              />
-            </div>
+          {/* Price mode toggle */}
+          <div className="price-mode-toggle">
+            <button
+              type="button"
+              className={`price-mode-btn ${priceMode === 'without' ? 'active' : ''}`}
+              onClick={() => { setPriceMode('without'); setBoxPriceInput(''); }}
+            >
+              Price without GST
+            </button>
+            <button
+              type="button"
+              className={`price-mode-btn ${priceMode === 'with' ? 'active' : ''}`}
+              onClick={() => { setPriceMode('with'); setBoxPriceInput(''); }}
+            >
+              Price + GST
+            </button>
           </div>
+
+          <div className="form-row">
+  <div className="form-group">
+    <label>
+      {priceMode === 'without' ? 'Box Price (without GST) *' : 'Box Price (with GST) *'}
+    </label>
+    <input
+      type="number"
+      value={boxPriceInput}
+      onChange={(e) => setBoxPriceInput(e.target.value)}
+      placeholder="0"
+      disabled={loading}
+    />
+  </div>
+
+  {/* Only show GST field when price+GST mode is selected */}
+  {priceMode === 'with' && (
+    <div className="form-group">
+      <label>GST %</label>
+      <input type="text" value={`${GST_PERCENTAGE}%`} disabled />
+    </div>
+  )}
+</div>
 
           <div className="total-units-box">
             <div className="total-unit-item">
