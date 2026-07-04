@@ -314,3 +314,120 @@
     border-radius: 20px;
   }
 }
+
+.rp-due-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rp-fill-btn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #4c6ef5;
+  background: #eef1ff;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.rp-fill-btn:hover {
+  background: #dde3ff;
+}
+
+.rp-settle-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1.5px solid #4c6ef5;
+  background: #fff;
+  color: #4c6ef5;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.rp-settle-btn:hover:not(:disabled) {
+  background: #4c6ef5;
+  color: #fff;
+}
+
+.rp-settle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rp-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.rp-confirm-box {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 320px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rp-confirm-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.rp-confirm-msg {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.rp-confirm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.rp-confirm-cancel {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  color: #555;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rp-confirm-ok {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #4c6ef5;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.rp-confirm-ok:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}

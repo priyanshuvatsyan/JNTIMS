@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { makePayment } from '../../../Database/apis';
+import { makePayment, settleCompanyBalance } from '../../../Database/apis';
 import { FiX, FiDelete } from 'react-icons/fi';
-import { BsCash, BsBank, BsPhone, BsFileText } from 'react-icons/bs';
+import { BsCash, BsFileText } from 'react-icons/bs';
 import './RecordPayment.css';
 
 const PAYMENT_MODES = [
@@ -21,15 +21,18 @@ function formatDisplayDate(dateStr) {
 export default function RecordPayment({ balances = [], selectedCompany, onClose, onSuccess }) {
   const today = getTodayStr();
 
-  const [companyId, setCompanyId]       = useState(selectedCompany?.companyId || '');
-  const [amountStr, setAmountStr]       = useState('0');
-  const [dateMode, setDateMode]         = useState('today');
-  const [customDate, setCustomDate]     = useState(today);
-  const [paymentMode, setPaymentMode]   = useState('cheque');
-  const [checkNumber, setCheckNumber]   = useState('');
-  const [note, setNote]                 = useState('');
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState('');
+  const [companyId, setCompanyId]         = useState(selectedCompany?.companyId || '');
+  const [amountStr, setAmountStr]         = useState('0');
+  const [dateMode, setDateMode]           = useState('today');
+  const [customDate, setCustomDate]       = useState(today);
+  const [paymentMode, setPaymentMode]     = useState('cheque');
+  const [checkNumber, setCheckNumber]     = useState('');
+  const [note, setNote]                   = useState('');
+  const [loading, setLoading]             = useState(false);
+  const [settling, setSettling]           = useState(false);
+  const [error, setError]                 = useState('');
+  const [showSettleConfirm, setShowSettleConfirm] = useState(false);
+  const [settleTimer, setSettleTimer]     = useState(5);
 
   const selectedBalance = balances.find(b => b.companyId === companyId);
   const amount = parseFloat(amountStr) || 0;
@@ -48,6 +51,12 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
       if (prev === '0' && val !== '.') return val;
       return prev + val;
     });
+  };
+
+  const handleFillDue = () => {
+    if (selectedBalance?.totalDue) {
+      setAmountStr(String(selectedBalance.totalDue));
+    }
   };
 
   const handleSubmit = async () => {
@@ -71,6 +80,32 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
     }
   };
 
+  const openSettleConfirm = () => {
+    if (!companyId) { setError('Select a company first'); return; }
+    setShowSettleConfirm(true);
+    setSettleTimer(5);
+    const interval = setInterval(() => {
+      setSettleTimer(prev => {
+        if (prev <= 1) { clearInterval(interval); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSettle = async () => {
+    setShowSettleConfirm(false);
+    setSettling(true);
+    setError('');
+    try {
+      await settleCompanyBalance(companyId);
+      onSuccess();
+    } catch (err) {
+      setError(err.message || 'Failed to settle. Try again.');
+    } finally {
+      setSettling(false);
+    }
+  };
+
   return (
     <div className="rp-overlay" onClick={onClose}>
       <div className="rp-sheet" onClick={e => e.stopPropagation()}>
@@ -91,7 +126,7 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
             <select
               className="rp-select"
               value={companyId}
-              onChange={e => setCompanyId(e.target.value)}
+              onChange={e => { setCompanyId(e.target.value); setAmountStr('0'); }}
             >
               <option value="">Select company...</option>
               {balances.map(b => (
@@ -140,9 +175,14 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
               ₹{parseFloat(amountStr || 0).toLocaleString('en-IN', { minimumFractionDigits: amountStr.includes('.') ? 2 : 0 })}
             </span>
             {selectedBalance && (
-              <span className="rp-amount-due">
-                Due: ₹{selectedBalance.totalDue.toLocaleString('en-IN')}
-              </span>
+              <div className="rp-due-row">
+                <span className="rp-amount-due">
+                  Due: ₹{selectedBalance.totalDue.toLocaleString('en-IN')}
+                </span>
+                <button className="rp-fill-btn" onClick={handleFillDue}>
+                  Fill Due
+                </button>
+              </div>
             )}
           </div>
 
@@ -175,7 +215,7 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
             </div>
           </div>
 
-          {/* Cheque number — only for cheque */}
+          {/* Cheque number */}
           {paymentMode === 'cheque' && (
             <div className="rp-field">
               <label className="rp-label">Cheque Number <span className="rp-required">*</span></label>
@@ -201,10 +241,44 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
             />
           </div>
 
+          {/* Settle button */}
+          <button
+            className="rp-settle-btn"
+            onClick={openSettleConfirm}
+            disabled={!companyId || settling}
+          >
+            {settling ? 'Settling...' : '✓ Mark as Settled'}
+          </button>
+
           {error && <p className="rp-error">{error}</p>}
         </div>
 
-        {/* Submit */}
+        {/* Settle confirm modal — outside rp-body */}
+        {showSettleConfirm && (
+          <div className="rp-confirm-overlay" onClick={() => setShowSettleConfirm(false)}>
+            <div className="rp-confirm-box" onClick={e => e.stopPropagation()}>
+              <h3 className="rp-confirm-title">Mark as Settled?</h3>
+              <p className="rp-confirm-msg">
+                This will mark all pending dues for <b>{selectedBalance?.companyName}</b> as paid.
+                This action cannot be undone.
+              </p>
+              <div className="rp-confirm-actions">
+                <button className="rp-confirm-cancel" onClick={() => setShowSettleConfirm(false)}>
+                  Cancel
+                </button>
+                <button
+                  className="rp-confirm-ok"
+                  disabled={settleTimer > 0}
+                  onClick={handleSettle}
+                >
+                  {settleTimer > 0 ? `Confirm (${settleTimer}s)` : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
         <div className="rp-footer">
           <button
             className={`rp-submit ${!isValid ? 'disabled' : ''}`}
@@ -214,6 +288,7 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
             {loading ? 'Processing...' : `Record Payment · ₹${amount.toLocaleString('en-IN')}`}
           </button>
         </div>
+
       </div>
     </div>
   );
