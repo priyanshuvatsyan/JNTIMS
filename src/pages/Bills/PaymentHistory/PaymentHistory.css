@@ -130,3 +130,32 @@
   .ph-name { font-size: 0.82rem; }
   .ph-amount { font-size: 0.82rem; }
 }
+
+.ph-cheque-due {
+  font-size: 0.68rem;
+  color: #f39c12;
+  font-weight: 600;
+  background: #fff8e1;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.ph-note {
+  font-size: 0.68rem;
+  color: #888;
+  font-style: italic;
+}
+.ph-delete-btn {
+  background: none;
+  border: none;
+  color: #ddd;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+  margin-top: 2px;
+}
+
+.ph-delete-btn:hover { color: #e53935; }
+.ph-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }

@@ -739,7 +739,7 @@ export async function markEntryAsPaid(entryId) {
 }
 
 //payments
-export async function makePayment({ companyId, amount, paymentDate = null, checkNumber = null, note = '', paymentMode = 'cash' }) {
+export async function makePayment({ companyId, amount, paymentDate = null, checkNumber = null, chequeDueDate = null, note = '', paymentMode = 'cash' }) {
   if (!companyId) throw new Error("Company ID is required");
   if (!amount || amount <= 0) throw new Error("Amount must be greater than 0");
 
@@ -810,6 +810,7 @@ const allEntries = [...manualEntries, ...stockEntries];
     note: note?.trim() || null,
     paymentMode,
     entriesCleared,
+     chequeDueDate: chequeDueDate ? new Date(chequeDueDate) : null,
     createdAt: serverTimestamp(),
   });
 
@@ -833,6 +834,11 @@ export async function getPaymentHistory(limitCount = 50) {
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+export async function deletePaymentRecord(paymentId) {
+  if (!paymentId) throw new Error('Payment ID is required');
+  await deleteDoc(doc(db, 'payments', paymentId));
 }
 
 const manualDuesCollection = collection(db, 'manualDues');
