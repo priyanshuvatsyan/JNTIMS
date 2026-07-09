@@ -12,7 +12,8 @@ export default function Bills() {
   const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
    const [showManual, setShowManual] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(null); // 👈 from PaymentDues click
+  const [selectedCompany, setSelectedCompany] = useState(null); 
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   const fetchBalances = async () => {
     setLoading(true);
@@ -49,14 +50,19 @@ export default function Bills() {
         loading={loading}
         onSelectCompany={handleCompanySelect} // 👈 pass handler
       />
-       <PaymentHistory />
+      <PaymentHistory refreshKey={historyRefreshKey} />
        <button className="bills-fab" onClick={() => setShowManual(true)}>+</button>
       {showPayment && (
         <RecordPayment
           balances={balances}
           selectedCompany={selectedCompany}
           onClose={() => { setShowPayment(false); setSelectedCompany(null); }}
-          onSuccess={() => { setShowPayment(false); setSelectedCompany(null); fetchBalances(); }}
+         onSuccess={() => {
+  setShowPayment(false);
+  setSelectedCompany(null);
+  fetchBalances();
+  setHistoryRefreshKey(k => k + 1); // 👈 trigger PaymentHistory refetch
+}}
         />
       )}
        {showManual && (

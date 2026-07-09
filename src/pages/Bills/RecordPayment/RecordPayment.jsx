@@ -6,7 +6,7 @@ import './RecordPayment.css';
 
 const PAYMENT_MODES = [
   { id: 'cheque', label: 'Cheque', icon: <BsFileText size={16} /> },
-  { id: 'cash',   label: 'Cash',   icon: <BsCash size={16} /> },
+  { id: 'cash', label: 'Cash', icon: <BsCash size={16} /> },
 ];
 
 function getTodayStr() {
@@ -21,18 +21,23 @@ function formatDisplayDate(dateStr) {
 export default function RecordPayment({ balances = [], selectedCompany, onClose, onSuccess }) {
   const today = getTodayStr();
 
-  const [companyId, setCompanyId]         = useState(selectedCompany?.companyId || '');
-  const [amountStr, setAmountStr]         = useState('0');
-  const [dateMode, setDateMode]           = useState('today');
-  const [customDate, setCustomDate]       = useState(today);
-  const [paymentMode, setPaymentMode]     = useState('cheque');
-  const [checkNumber, setCheckNumber]     = useState('');
-  const [note, setNote]                   = useState('');
-  const [loading, setLoading]             = useState(false);
-  const [settling, setSettling]           = useState(false);
-  const [error, setError]                 = useState('');
+  const [companyId, setCompanyId] = useState(selectedCompany?.companyId || '');
+  const [amountStr, setAmountStr] = useState('0');
+  const [dateMode, setDateMode] = useState('today');
+  const [customDate, setCustomDate] = useState(today);
+  const [paymentMode, setPaymentMode] = useState('cheque');
+  const [checkNumber, setCheckNumber] = useState(() => {
+  const last = localStorage.getItem('lastChequeNumber');
+  if (!last || isNaN(last)) return '';
+  return String(Number(last) + 1);
+});
+  const [note, setNote] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [settling, setSettling] = useState(false);
+  const [error, setError] = useState('');
   const [showSettleConfirm, setShowSettleConfirm] = useState(false);
-  const [settleTimer, setSettleTimer]     = useState(5);
+  const [settleTimer, setSettleTimer] = useState(5);
+  const [chequeDueDate, setChequeDueDate] = useState('');
 
   const selectedBalance = balances.find(b => b.companyId === companyId);
   const amount = parseFloat(amountStr) || 0;
@@ -69,9 +74,13 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
         amount,
         paymentDate,
         checkNumber: paymentMode === 'cheque' ? checkNumber : null,
+        chequeDueDate: paymentMode === 'cheque' && chequeDueDate ? chequeDueDate : null, 
         note,
         paymentMode,
       });
+      if (paymentMode === 'cheque' && checkNumber.trim()) {
+  localStorage.setItem('lastChequeNumber', checkNumber.trim()); 
+}
       onSuccess();
     } catch (err) {
       setError(err.message || 'Payment failed. Try again.');
@@ -104,6 +113,10 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
     } finally {
       setSettling(false);
     }
+
+    
+
+    
   };
 
   return (
@@ -187,7 +200,7 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
           </div>
 
           <div className="rp-numpad">
-            {['7','8','9','4','5','6','1','2','3','.','0','⌫'].map(key => (
+            {['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'].map(key => (
               <button
                 key={key}
                 className={`rp-key ${key === '⌫' ? 'rp-key-del' : ''}`}
@@ -225,6 +238,19 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
                 placeholder="e.g. 004521"
                 value={checkNumber}
                 onChange={e => setCheckNumber(e.target.value)}
+              />
+            </div>
+          )}
+          
+          {paymentMode === 'cheque' && (
+            <div className="rp-field">
+              <label className="rp-label">Cheque Due Date <span className="rp-optional">(optional)</span></label>
+              <input
+                type="date"
+                className="rp-date-input"
+                value={chequeDueDate}
+                onChange={e => setChequeDueDate(e.target.value)}
+                min={today}
               />
             </div>
           )}

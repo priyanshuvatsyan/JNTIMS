@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getPaymentHistory } from '../../../Database/apis';
 import { BsCash, BsBank, BsPhone, BsFileText } from 'react-icons/bs';
-import { FiCheckCircle, FiClock } from 'react-icons/fi';
+import { getPaymentHistory, deletePaymentRecord } from '../../../Database/apis';
+import { FiCheckCircle, FiTrash2 } from 'react-icons/fi';
 import './PaymentHistory.css';
 
 const capitalizeWords = (str = '') =>
@@ -20,22 +20,37 @@ function getTimeLabel(timestamp) {
 }
 
 const MODE_ICONS = {
-  cash:   { icon: <BsCash size={16} />,     color: '#27ae60', bg: '#e8faf2' },
-  bank:   { icon: <BsBank size={16} />,     color: '#4c6ef5', bg: '#eef1ff' },
-  upi:    { icon: <BsPhone size={16} />,    color: '#9c27b0', bg: '#f3e5f5' },
+  cash: { icon: <BsCash size={16} />, color: '#27ae60', bg: '#e8faf2' },
+  bank: { icon: <BsBank size={16} />, color: '#4c6ef5', bg: '#eef1ff' },
+  upi: { icon: <BsPhone size={16} />, color: '#9c27b0', bg: '#f3e5f5' },
   cheque: { icon: <BsFileText size={16} />, color: '#4c6ef5', bg: '#eef1ff' },
 };
 
-export default function PaymentHistory() {
+export default function PaymentHistory({ refreshKey }) {
   const [payments, setPayments] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  const [deletingId, setDeletingId] = useState(null);
+
+  const handleDelete = async (paymentId) => {
+    setDeletingId(paymentId);
+    try {
+      await deletePaymentRecord(paymentId);
+      setPayments(prev => prev.filter(p => p.id !== paymentId));
+    } catch (err) {
+      console.error('Failed to delete payment:', err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
+    setLoading(true);
     getPaymentHistory()
       .then(setPayments)
       .catch(err => console.error('Failed to fetch payment history:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshKey]); 
 
   return (
     <div className="ph-container">
@@ -69,6 +84,14 @@ export default function PaymentHistory() {
                       <span className="ph-check">#{p.checkNumber}</span>
                     )}
                   </div>
+                  {p.chequeDueDate && (
+                    <span className="ph-cheque-due">
+                      Due {new Date(p.chequeDueDate?.toDate?.() || p.chequeDueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    </span>
+                  )}
+                  {p.note && (
+                    <span className="ph-note">"{p.note}"</span>
+                  )}
                 </div>
 
                 {/* Amount + status */}
@@ -76,9 +99,16 @@ export default function PaymentHistory() {
                   <span className="ph-amount">
                     ₹{Number(p.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
-                  <span className="ph-status paid">
-                    <FiCheckCircle size={11} /> Paid
-                  </span>
+                  {/* <span className="ph-status paid">
+    <FiCheckCircle size={11} /> Paid
+  </span> */}
+                  <button
+                    className="ph-delete-btn"
+                    onClick={() => handleDelete(p.id)}
+                    disabled={deletingId === p.id}
+                  >
+                    <FiTrash2 size={12} />
+                  </button>
                 </div>
 
               </div>
