@@ -634,51 +634,22 @@ export async function getTodaysSalesStats() {
 }
 
 export async function getBillsStats() {
-  const [companiesSnap, datesSnap] = await Promise.all([
-    getDocs(companiesCollection),
-    getDocs(stockArrivalDateCollection),
-  ]);
+  const balances = await getOutstandingBalances();
 
-  // Build companies map for name lookup
-  const companiesMap = {};
-  companiesSnap.forEach(doc => {
-    companiesMap[doc.id] = { id: doc.id, ...doc.data() };
-  });
-
-  let totalPayable = 0;
-  let totalPaid = 0;
-  let pendingItems = 0;
-  const companyTotals = {};
-
-  datesSnap.forEach(doc => {
-    const data = doc.data();
-    const amount = data.amount || 0;
-
-    if (data.isPaid) {
-      totalPaid += amount;
-    } else {
-      totalPayable += amount;
-      pendingItems += 1;
-
-      if (!companyTotals[data.companyId]) {
-        companyTotals[data.companyId] = {
-          companyId: data.companyId,
-          companyName: companiesMap[data.companyId]?.name || 'Unknown',
-          totalPending: 0,
-          pendingEntries: 0,
-        };
-      }
-      companyTotals[data.companyId].totalPending += amount;
-      companyTotals[data.companyId].pendingEntries += 1;
-    }
-  });
+  const totalPayable = balances.reduce((sum, balance) => sum + (balance.totalDue || 0), 0);
+  const pendingItems = balances.length;
 
   return {
     totalPayable,
-    totalPaid,
+    totalPaid: 0,
     pendingItems,
-    companiesCount: Object.keys(companyTotals).length,
-    companiesList: Object.values(companyTotals),
+    companiesCount: balances.length,
+    companiesList: balances.map(balance => ({
+      companyId: balance.companyId,
+      companyName: balance.companyName,
+      totalPending: balance.totalDue || 0,
+      pendingEntries: 1,
+    })),
   };
 }
 
@@ -960,13 +931,14 @@ export async function getAnalyticsStats(months = 6) {
   let totalStock = 0;
   let lowStock = 0;
   let outOfStock = 0;
+  const lowStockThreshold = (s.totalUnits || 0) * 0.2;
   const activeCompanyIds = new Set();
 
   stockSnap.forEach(doc => {
     const s = doc.data();
     totalStock += s.remainingQty || 0;
     if (s.remainingQty === 0) outOfStock += 1;
-    if (s.remainingQty > 0 && s.remainingQty <= 5) lowStock += 1;
+    if (s.remainingQty > 0 && s.remainingQty <= lowStockThreshold) lowStock += 1;
     if (s.remainingQty > 0) activeCompanyIds.add(s.companyId);
   });
 

@@ -421,7 +421,7 @@ export default function AddStock({ editStock = null, onEditClose }) {
             </div>
             <div className="total-unit-item">
               <span>Unit (GST)</span>
-              <strong>₹{perUnitPriceWithGst.toFixed(2)}</strong>
+             <strong>₹{Math.round(perUnitPriceWithGst)}</strong>
             </div>
           </div>
 

@@ -3,9 +3,10 @@ import { searchStock, makeSale } from '../../../Database/apis';
 import { FiSearch, FiShoppingCart, FiX, FiMinus, FiPlus } from 'react-icons/fi';
 import './SellItems.css';
 
-function getStockStatus(remainingQty) {
-  if (remainingQty === 0) return 'out';
-  if (remainingQty <= 5) return 'low';
+function getStockStatus(stock) {
+  if (stock.remainingQty === 0) return 'out';
+  const threshold = (stock.totalUnits || 0) * 0.2;
+  if (stock.remainingQty <= threshold) return 'low';
   return 'in';
 }
 
@@ -51,7 +52,7 @@ useEffect(() => {
   }, [searchTerm]);
 
   const handleSelectItem = (item) => {
-    if (getStockStatus(item.remainingQty) === 'out') return;
+    if (getStockStatus(item) === 'out') return;
     setSelectedItem(item);
     setQuantity(1);
     setCustomerName('');
