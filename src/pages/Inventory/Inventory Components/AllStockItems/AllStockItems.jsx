@@ -4,7 +4,8 @@ import './AllStockItems.css';
 
 function getStockStatus(stock) {
   if (stock.remainingQty === 0) return 'out';
-  if (stock.remainingQty > 0 && stock.remainingQty <= 5) return 'low';
+  const threshold = (stock.totalUnits || 0) * 0.2;
+  if (stock.remainingQty <= threshold) return 'low';
   return 'in';
 }
 
@@ -80,14 +81,14 @@ export default function AllStockItems({ stocks, loading, error, onDelete, onEdit
             <div className="stock-info">
               <div className="stock-row">
                 <span>{stock.remainingQty} units</span>
-                <span>Min: 10</span>
+                {/* <span>Min: 10</span> */}
               </div>
 
               <div className="progress-bar">
                 <div
                   className={`progress ${status}`}
                   style={{
-                    width: `${Math.min((stock.remainingQty / 50) * 100, 100)}%`,
+                   width: `${Math.min((stock.remainingQty / (stock.totalUnits || stock.remainingQty)) * 100, 100)}%`
                   }}
                 ></div>
               </div>
@@ -95,8 +96,8 @@ export default function AllStockItems({ stocks, loading, error, onDelete, onEdit
 
             {/* Price */}
             <div className="price-row">
-              <span>Sell <b>${stock.sellingPrice}</b></span>
-              <span>Buy ${stock.buyingPrice || '—'}</span>
+              <span>Sell <b>₹{stock.sellingPrice}</b></span>
+              {/* <span>Buy <b>₹{stock.buyingPrice || '—'}</b></span> */}
               <span>GST {stock.gst}%</span>
             </div>
 
