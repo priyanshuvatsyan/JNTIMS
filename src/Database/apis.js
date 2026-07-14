@@ -931,15 +931,18 @@ export async function getAnalyticsStats(months = 6) {
   let totalStock = 0;
   let lowStock = 0;
   let outOfStock = 0;
-  const lowStockThreshold = (s.totalUnits || 0) * 0.2;
   const activeCompanyIds = new Set();
 
   stockSnap.forEach(doc => {
     const s = doc.data();
-    totalStock += s.remainingQty || 0;
-    if (s.remainingQty === 0) outOfStock += 1;
-    if (s.remainingQty > 0 && s.remainingQty <= lowStockThreshold) lowStock += 1;
-    if (s.remainingQty > 0) activeCompanyIds.add(s.companyId);
+    const remainingQty = s.remainingQty || 0;
+    const totalUnits = s.totalUnits || 0;
+    const lowStockThreshold = totalUnits > 0 ? totalUnits * 0.2 : 0;
+
+    totalStock += remainingQty;
+    if (remainingQty === 0) outOfStock += 1;
+    if (remainingQty > 0 && remainingQty <= lowStockThreshold) lowStock += 1;
+    if (remainingQty > 0) activeCompanyIds.add(s.companyId);
   });
 
   // ── Company stats ──
