@@ -4,11 +4,10 @@
   gap: 10px;
 }
 
-/* ── Card ── */
 .as-card {
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -17,7 +16,7 @@
 
 .as-skeleton {
   height: 110px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #2c2c2c 25%, #3a3a3a 50%, #2c2c2c 75%);
   background-size: 200% 100%;
   animation: as-shimmer 1.2s infinite;
 }
@@ -27,7 +26,6 @@
   100% { background-position: -200% 0; }
 }
 
-/* ── Card top row ── */
 .as-card-top {
   display: flex;
   align-items: center;
@@ -52,18 +50,17 @@
 .as-trend.up   { color: #27ae60; }
 .as-trend.down { color: #e53935; }
 
-/* ── Text ── */
 .as-value {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--app-text);
   letter-spacing: -0.5px;
   line-height: 1;
 }
 
 .as-label {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--muted-text);
   font-weight: 500;
 }
 
@@ -73,7 +70,6 @@
   margin-top: 2px;
 }
 
-/* ── Desktop ── */
 @media (min-width: 768px) {
   .as-grid {
     grid-template-columns: repeat(4, 1fr);
