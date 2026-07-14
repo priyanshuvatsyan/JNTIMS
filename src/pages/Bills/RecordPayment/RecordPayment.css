@@ -10,12 +10,13 @@
 .rp-sheet {
   width: 100%;
   max-height: 95dvh;
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 20px 20px 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: rp-slide-up 0.3s ease;
+  border: 1px solid var(--border-color);
 }
 
 @keyframes rp-slide-up {
@@ -26,7 +27,7 @@
 .rp-drag-bar {
   width: 40px;
   height: 4px;
-  background: #e0e0e0;
+  background: var(--border-color);
   border-radius: 2px;
   margin: 10px auto 0;
   flex-shrink: 0;
@@ -44,11 +45,11 @@
 .rp-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--app-text);
 }
 
 .rp-close {
-  background: #f4f4f4;
+  background: var(--surface-alt-bg);
   border: none;
   border-radius: 50%;
   width: 32px;
@@ -57,7 +58,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #555;
+  color: var(--muted-text);
 }
 
 /* ── Scrollable body ── */
@@ -94,17 +95,17 @@
 .rp-select {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 0.875rem;
-  color: #222;
-  background: #fff;
+  color: var(--input-text);
+  background: var(--input-bg);
   outline: none;
   appearance: none;
   cursor: pointer;
 }
 
-.rp-select:focus { border-color: #4c6ef5; }
+.rp-select:focus { border-color: var(--accent-strong); }
 
 /* ── Date toggle ── */
 .rp-date-toggle {
@@ -115,18 +116,18 @@
 .rp-toggle-btn {
   padding: 4px 12px;
   border-radius: 20px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--surface-alt-bg);
   font-size: 0.75rem;
   font-weight: 500;
-  color: #777;
+  color: var(--muted-text);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .rp-toggle-btn.active {
-  background: #4c6ef5;
-  border-color: #4c6ef5;
+  background: var(--accent-color);
+  border-color: var(--accent-color);
   color: #fff;
 }
 
@@ -135,18 +136,18 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
-  background: #f9f9ff;
+  background: var(--surface-alt-bg);
 }
 
-.rp-date-text { font-size: 0.875rem; color: #333; font-weight: 500; }
+.rp-date-text { font-size: 0.875rem; color: var(--app-text); font-weight: 500; }
 
 .rp-date-badge {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #4c6ef5;
-  background: #eef1ff;
+  color: var(--accent-color);
+  background: rgba(56, 189, 248, 0.12);
   padding: 2px 8px;
   border-radius: 10px;
 }
@@ -154,15 +155,16 @@
 .rp-date-input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--input-text);
   outline: none;
   box-sizing: border-box;
+  background: var(--input-bg);
 }
 
-.rp-date-input:focus { border-color: #4c6ef5; }
+.rp-date-input:focus { border-color: var(--accent-strong); }
 
 /* ── Amount ── */
 .rp-amount-section {
@@ -183,14 +185,14 @@
 .rp-amount-display {
   font-size: 2.8rem;
   font-weight: 800;
-  color: #1a1a2e;
+  color: var(--app-text);
   letter-spacing: -1px;
   line-height: 1;
 }
 
 .rp-amount-due {
   font-size: 0.75rem;
-  color: #e53935;
+  color: #f87171;
   font-weight: 500;
 }
 
@@ -205,10 +207,10 @@
   padding: 16px;
   border: none;
   border-radius: 10px;
-  background: #f4f5f9;
+  background: var(--surface-alt-bg);
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a2e;
+  color: var(--app-text);
   cursor: pointer;
   transition: background 0.12s, transform 0.08s;
   display: flex;
@@ -216,14 +218,14 @@
   justify-content: center;
 }
 
-.rp-key:active { transform: scale(0.95); background: #e8eaf6; }
+.rp-key:active { transform: scale(0.95); background: var(--hover-bg); }
 
 .rp-key-del {
-  background: #fff0f0;
-  color: #e53935;
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
 }
 
-.rp-key-del:active { background: #ffd7d7; }
+.rp-key-del:active { background: rgba(248, 113, 113, 0.2); }
 
 /* ── Payment methods ── */
 .rp-methods {
@@ -238,37 +240,38 @@
   align-items: center;
   gap: 5px;
   padding: 10px 6px;
-  border: 1.5px solid #e0e0e0;
+  border: 1.5px solid var(--input-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface-alt-bg);
   font-size: 0.72rem;
   font-weight: 500;
-  color: #666;
+  color: var(--muted-text);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .rp-method-btn.active {
-  border-color: #4c6ef5;
-  background: #eef1ff;
-  color: #4c6ef5;
+  border-color: var(--accent-color);
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--accent-color);
 }
 
 /* ── Input ── */
 .rp-input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--input-text);
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.15s;
+  background: var(--input-bg);
 }
 
-.rp-input:focus { border-color: #4c6ef5; }
-.rp-input::placeholder { color: #bbb; }
+.rp-input:focus { border-color: var(--accent-strong); }
+.rp-input::placeholder { color: var(--placeholder-text); }
 
 /* ── Error ── */
 .rp-error {
@@ -282,13 +285,13 @@
 .rp-footer {
   padding: 12px 20px 20px;
   flex-shrink: 0;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .rp-submit {
   width: 100%;
   padding: 16px;
-  background: #4c6ef5;
+  background: var(--accent-color);
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -324,8 +327,8 @@
 .rp-fill-btn {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #4c6ef5;
-  background: #eef1ff;
+  color: var(--accent-color);
+  background: rgba(99, 102, 241, 0.16);
   border: none;
   border-radius: 6px;
   padding: 3px 9px;
@@ -334,16 +337,16 @@
 }
 
 .rp-fill-btn:hover {
-  background: #dde3ff;
+  background: rgba(99, 102, 241, 0.24);
 }
 
 .rp-settle-btn {
   width: 100%;
   padding: 12px;
   border-radius: 10px;
-  border: 1.5px solid #4c6ef5;
-  background: #fff;
-  color: #4c6ef5;
+  border: 1.5px solid var(--accent-color);
+  background: var(--surface-bg);
+  color: var(--accent-color);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -372,7 +375,7 @@
 }
 
 .rp-confirm-box {
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 14px;
   padding: 24px;
   max-width: 320px;
@@ -380,18 +383,19 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  border: 1px solid var(--border-color);
 }
 
 .rp-confirm-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--app-text);
   margin: 0;
 }
 
 .rp-confirm-msg {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--muted-text);
   margin: 0;
   line-height: 1.5;
 }
@@ -406,9 +410,9 @@
   flex: 1;
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  color: #555;
+  border: 1px solid var(--input-border);
+  background: var(--surface-alt-bg);
+  color: var(--app-text);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -419,7 +423,7 @@
   padding: 10px;
   border-radius: 8px;
   border: none;
-  background: #4c6ef5;
+  background: var(--accent-color);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 600;

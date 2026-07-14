@@ -36,11 +36,12 @@
   bottom: -100%;
   left: 0;
   width: 100%;
-  background: #f5f7fb;
+  background: var(--surface-bg);
   border-radius: 20px 20px 0 0;
   padding: 20px;
   transition: 0.3s ease-in-out;
   z-index: 1001;
+  border: 1px solid var(--border-color);
 }
 
 .bottom-sheet.open {
@@ -51,7 +52,7 @@
 .drag-bar {
   width: 50px;
   height: 5px;
-  background: #ccc;
+  background: var(--border-color);
   border-radius: 10px;
   margin: 0 auto 10px;
 }
@@ -60,22 +61,25 @@
 .bottom-sheet h2 {
   text-align: center;
   margin-bottom: 20px;
+  color: var(--app-text);
 }
 
 .bottom-sheet label {
   display: block;
   margin: 10px 0 5px;
   font-size: 14px;
-  color: #333;
+  color: var(--app-text);
 }
 
 .bottom-sheet input {
   width: 100%;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--input-border);
   margin-bottom: 10px;
   outline: none;
+  background: var(--input-bg);
+  color: var(--input-text);
 }
 
 /* Button */

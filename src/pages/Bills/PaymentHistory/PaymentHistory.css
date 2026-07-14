@@ -1,7 +1,7 @@
 .ph-container {
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
   overflow: hidden;
   margin-top: 12px;
 }
@@ -9,18 +9,18 @@
 .ph-title {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #999;
+  color: var(--muted-text);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   margin: 0;
   padding: 14px 16px 10px;
-  border-bottom: 1px solid #f7f7f7;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .ph-state {
   padding: 32px;
   text-align: center;
-  color: #bbb;
+  color: var(--muted-text);
   font-size: 0.875rem;
 }
 
@@ -36,12 +36,12 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  border-bottom: 1px solid #f7f7f7;
+  border-bottom: 1px solid var(--border-color);
   transition: background 0.15s;
 }
 
 .ph-row:last-child { border-bottom: none; }
-.ph-row:hover { background: #fafafa; }
+.ph-row:hover { background: var(--hover-bg); }
 
 /* ── Icon ── */
 .ph-icon {
@@ -66,7 +66,7 @@
 .ph-name {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #222;
+  color: var(--app-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -88,12 +88,12 @@
 
 .ph-date {
   font-size: 0.72rem;
-  color: #aaa;
+  color: var(--muted-text);
 }
 
 .ph-check {
   font-size: 0.72rem;
-  color: #aaa;
+  color: var(--muted-text);
   font-family: monospace;
 }
 
@@ -109,7 +109,7 @@
 .ph-amount {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #222;
+  color: var(--app-text);
 }
 
 .ph-status {
@@ -133,22 +133,22 @@
 
 .ph-cheque-due {
   font-size: 0.68rem;
-  color: #f39c12;
+  color: #f59e0b;
   font-weight: 600;
-  background: #fff8e1;
+  background: rgba(254, 243, 199, 0.12);
   padding: 2px 7px;
   border-radius: 20px;
 }
 
 .ph-note {
   font-size: 0.68rem;
-  color: #888;
+  color: var(--muted-text);
   font-style: italic;
 }
 .ph-delete-btn {
   background: none;
   border: none;
-  color: #ddd;
+  color: var(--muted-text);
   cursor: pointer;
   padding: 2px;
   display: flex;

@@ -7,11 +7,11 @@
 .af-btn {
   padding: 7px 16px;
   border-radius: 20px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
+  border: 1px solid var(--border-color);
+  background: var(--surface-bg);
   font-size: 0.7rem;
   font-weight: 500;
-  color: #666;
+  color: var(--muted-text);
   cursor: pointer;
   transition: all 0.15s;
 }

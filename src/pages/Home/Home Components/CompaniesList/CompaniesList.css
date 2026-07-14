@@ -6,16 +6,17 @@
   margin: 0 0 0 15px;
   font-size: 18px;
   font-family: Arial, Helvetica, sans-serif;
+  color: var(--app-text);
 }
 
 .company-icon {
   font-size: 18px;
-  color: #757575;
+  color: var(--muted-text);
 }
 
 .heading-count {
   font-size: 15px;
-  color: #757575;
+  color: var(--muted-text);
 }
 
 
@@ -24,7 +25,9 @@
   margin: 10px 15px;
   padding: 12px;
   border-radius: 12px;
-  background: #f5f6f8;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
 }
 
 
@@ -39,8 +42,8 @@
 .companyinfo-left {
   width: 40px;
   height: 40px;
-  background: #7facff8c;
-  color: rgb(11, 15, 255);
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
   border-radius: 35%;
   display: flex;
   align-items: center;
@@ -63,14 +66,13 @@
 .companyinfo-middle p {
   margin: 0;
   font-size: 12px;
-  color: #198044;
-  background-color: #008f3b1a;
-padding: 2px 6px;
-width: fit-content;
-margin-top: 5px;
-border-radius: 4px;
-font-weight: bold;
-
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.18);
+  padding: 2px 6px;
+  width: fit-content;
+  margin-top: 5px;
+  border-radius: 4px;
+  font-weight: bold;
 }
 
 
@@ -94,7 +96,7 @@ font-weight: bold;
 .paymentinfo-left p {
   margin: 0;
   font-size: 12px;
-  color: #757575;
+  color: var(--muted-text);
 }
 
 .paymentinfo-left h3 {
@@ -116,12 +118,12 @@ font-weight: bold;
 
 /* ===== DROPDOWN SECTION ===== */
 .dropdown-click {
-    display: flex;
+  display: flex;
   align-items: center;
-  justify-content: space-between;;
+  justify-content: space-between;
   margin-top: 12px;
   font-size: 12px;
-  color: #555;
+  color: var(--muted-text);
 }
 .dropdown-click button {
   color: #ff4d4d;
@@ -167,7 +169,8 @@ font-weight: bold;
   width: 90%;
   max-width: 400px;
 
-  background: white;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 20px;
   z-index: 1000;
@@ -188,7 +191,8 @@ font-weight: bold;
   margin-right: 10px;
   padding: 10px;
   border: none;
-  background: #eee;
+  background: var(--surface-alt-bg);
+  color: var(--app-text);
   border-radius: 8px;
   cursor: pointer;
 }

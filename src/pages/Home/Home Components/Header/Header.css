@@ -1,11 +1,15 @@
 .header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 20px;
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
-/* LEFT SIDE */
 .left {
   display: flex;
   align-items: center;
@@ -23,25 +27,42 @@
 
 .title h3 {
   margin: 0;
+  color: var(--app-text);
 }
 
 .title p {
   margin: 0;
   font-size: 12px;
-  color: gray;
+  color: var(--muted-text);
 }
 
-/* RIGHT SIDE (NOTIFICATION) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-toggle {
+  border: 1px solid var(--border-color);
+  background: var(--surface-bg);
+  color: var(--app-text);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 .notification {
-  position: absolute;
-  top: 10px;
-  right: 20px;
+  position: relative;
   cursor: pointer;
 }
 
 .bell-icon {
   font-size: 22px;
-  color: gray;
+  color: var(--muted-text);
 }
 
 .dot {
@@ -50,6 +71,6 @@
   right: 2px;
   width: 8px;
   height: 8px;
-  background: red;
+  background: #ef4444;
   border-radius: 50%;
 }

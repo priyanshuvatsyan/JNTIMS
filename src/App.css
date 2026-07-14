@@ -3,6 +3,7 @@
   user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
+  box-sizing: border-box;
 }
 
 /* Re-enable inside input fields */
@@ -11,6 +12,26 @@ input, textarea {
   -webkit-user-select: text;
   -ms-user-select: text;
 }
+
 body {
+  margin: 0;
   font-family: 'Quicksand', sans-serif;
+  background: var(--app-bg);
+  color: var(--app-text);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.app-main {
+  padding: 12px 12px 84px;
+  background: var(--app-bg);
 }

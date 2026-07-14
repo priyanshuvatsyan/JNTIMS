@@ -1,7 +1,7 @@
 .ama-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.65);
   z-index: 100;
   display: flex;
   align-items: flex-end;
@@ -10,12 +10,13 @@
 .ama-sheet {
   width: 100%;
   max-height: 90dvh;
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 20px 20px 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: ama-slide-up 0.3s ease;
+  border: 1px solid var(--border-color);
 }
 
 @keyframes ama-slide-up {
@@ -26,13 +27,12 @@
 .ama-drag-bar {
   width: 40px;
   height: 4px;
-  background: #e0e0e0;
+  background: var(--border-color);
   border-radius: 2px;
   margin: 10px auto 0;
   flex-shrink: 0;
 }
 
-/* ── Header ── */
 .ama-header {
   display: flex;
   align-items: center;
@@ -44,11 +44,11 @@
 .ama-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--app-text);
 }
 
 .ama-close {
-  background: #f4f4f4;
+  background: var(--surface-alt-bg);
   border: none;
   border-radius: 50%;
   width: 32px;
@@ -57,10 +57,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #555;
+  color: var(--muted-text);
 }
 
-/* ── Body ── */
 .ama-body {
   flex: 1;
   overflow-y: auto;
@@ -70,54 +69,51 @@
   gap: 16px;
 }
 
-/* ── Field ── */
 .ama-field { display: flex; flex-direction: column; gap: 6px; }
 
 .ama-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #555;
+  color: var(--muted-text);
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 
-.ama-req { color: #e53935; margin-left: 2px; }
-.ama-opt { color: #aaa; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.ama-req { color: #f87171; margin-left: 2px; }
+.ama-opt { color: var(--muted-text); font-weight: 400; text-transform: none; letter-spacing: 0; }
 
-/* ── Select ── */
 .ama-select {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 0.875rem;
-  color: #222;
-  background: #fff;
+  color: var(--input-text);
+  background: var(--input-bg);
   outline: none;
   appearance: none;
   cursor: pointer;
 }
 
-.ama-select:focus { border-color: #4c6ef5; }
+.ama-select:focus { border-color: var(--accent-color); }
 
-/* ── Amount wrapper ── */
 .ama-amount-wrapper {
   display: flex;
   align-items: center;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   overflow: hidden;
   transition: border-color 0.15s;
 }
 
-.ama-amount-wrapper:focus-within { border-color: #4c6ef5; }
+.ama-amount-wrapper:focus-within { border-color: var(--accent-color); }
 
 .ama-currency {
   padding: 0 12px;
   font-size: 1rem;
   font-weight: 600;
-  color: #4c6ef5;
-  background: #eef1ff;
+  color: var(--accent-color);
+  background: var(--surface-alt-bg);
   height: 100%;
   display: flex;
   align-items: center;
@@ -128,45 +124,45 @@
   border: none !important;
   border-radius: 0 !important;
   flex: 1;
+  background: transparent;
+  color: var(--input-text);
 }
 
 .ama-input-amount:focus { outline: none; }
 
-/* ── Input ── */
 .ama-input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--input-text);
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.15s;
+  background: var(--input-bg);
 }
 
-.ama-input:focus { border-color: #4c6ef5; }
-.ama-input::placeholder { color: #bbb; }
+.ama-input:focus { border-color: var(--accent-color); }
+.ama-input::placeholder { color: var(--placeholder-text); }
 
-/* ── Error ── */
 .ama-error {
   font-size: 0.8rem;
-  color: #e53935;
+  color: #f87171;
   margin: 0;
   text-align: center;
 }
 
-/* ── Footer ── */
 .ama-footer {
   padding: 12px 20px 20px;
   flex-shrink: 0;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .ama-submit {
   width: 100%;
   padding: 16px;
-  background: #4c6ef5;
+  background: var(--accent-color);
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -176,10 +172,10 @@
   transition: background 0.2s;
 }
 
-.ama-submit:hover:not(.disabled) { background: #3b5bdb; }
+.ama-submit:hover:not(.disabled) { background: var(--accent-strong); }
 
 .ama-submit.disabled {
-  background: #c5cae9;
+  background: #6b7280;
   cursor: not-allowed;
 }
 

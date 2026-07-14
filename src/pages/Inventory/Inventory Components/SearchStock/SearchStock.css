@@ -10,14 +10,16 @@ display: flex;
 .SearchStock input {
   width: 90%;
   padding: 10px 10px 10px 45px;
-  border: 1px solid #cccccc6e;
+  border: 1px solid var(--border-color);
   outline: none;
   border-radius: 15px;
   font-size: 16px;
-  background-color: rgb(255, 255, 255);
+  background-color: var(--input-bg);
+  color: var(--input-text);
   height: 50px;
 }
-input::placeholder {
-  color: #a1a1a1;
+
+.SearchStock input::placeholder {
+  color: var(--muted-text);
   font-size: 14px;
 }

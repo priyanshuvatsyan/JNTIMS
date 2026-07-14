@@ -64,14 +64,14 @@
   padding: 10px;
   border: none;
   border-radius: 5px;
-  background-color: #f0f0f0;
+  background-color: var(--surface-alt-bg);
   font-size: 14px;
   cursor: pointer;
   text-align: left;
 }
 
 .options-menu button:hover {
-  background-color: #e0e0e0;
+  background-color: var(--hover-bg);
 }
 
 .options-menu .option-btn {
@@ -99,7 +99,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: white;
+  background-color: var(--surface-bg);
   padding: 20px 16px 25px;
   border-radius: 20px 20px 0 0;
   transform: translateY(100%);
@@ -120,7 +120,7 @@
 .drag-bar {
   width: 40px;
   height: 4px;
-  background-color: #ccc;
+  background-color: var(--border-color);
   border-radius: 2px;
   margin: 0 auto 20px;
 }
@@ -129,7 +129,7 @@
   margin-bottom: 18px;
   text-align: center;
   font-size: 20px;
-  color: #333;
+  color: var(--app-text);
 }
 
 .bottom-sheet form {
@@ -163,18 +163,18 @@
 .bottom-sheet label {
   font-weight: 600;
   font-size: 13px;
-  color: #333;
+  color: var(--app-text);
   text-transform: capitalize;
 }
 
 .bottom-sheet input,
 .bottom-sheet select {
   padding: 12px 14px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   font-size: 14px;
-  background-color: #f8f9fa;
-  color: #333;
+  background-color: var(--input-bg);
+  color: var(--input-text);
   transition: all 0.2s ease;
   width: 100%;
   min-width: 0;
@@ -184,19 +184,19 @@
 .bottom-sheet input:focus,
 .bottom-sheet select:focus {
   outline: none;
-  background-color: #fff;
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  background-color: var(--input-bg);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
 }
 
 .bottom-sheet input:disabled,
 .bottom-sheet select:disabled {
-  background-color: #f0f0f0;
+  background-color: var(--border-color);
   cursor: not-allowed;
 }
 
 .bottom-sheet input::placeholder {
-  color: #999;
+  color: var(--placeholder-text);
 }
 
 .total-units-box {
@@ -253,7 +253,7 @@
 }
 
 .submit-btn:disabled {
-  background-color: #ccc;
+  background-color: var(--border-color);
   cursor: not-allowed;
   transform: none;
 }
@@ -266,9 +266,9 @@
 }
 
 .form-message.error {
-  background-color: #fee;
-  color: #c33;
-  border: 1px solid #fcc;
+  background-color: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
 }
 
 .stock-date-wrapper {
@@ -306,7 +306,7 @@
 }
 
 .add-date-icon-btn:disabled {
-  background-color: #ccc;
+  background-color: var(--border-color);
   cursor: not-allowed;
 }
 
@@ -322,11 +322,11 @@
   flex: 1;
   padding: 7px 12px;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--surface-alt-bg);
   font-size: 0.75rem;
   font-weight: 500;
-  color: #666;
+  color: var(--muted-text);
   cursor: pointer;
   transition: all 0.15s;
 }

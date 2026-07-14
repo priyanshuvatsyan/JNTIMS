@@ -1,0 +1,222 @@
+:root {
+  color-scheme: light;
+  --app-bg: #f7f9fc;
+  --header-bg: #ffffff;
+  --nav-bg: #f5f6f8;
+  --surface-bg: #ffffff;
+  --surface-alt-bg: #f8fafc;
+  --panel-bg: #ffffff;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-text: #111827;
+  --placeholder-text: #9ca3af;
+  --app-text: #111827;
+  --muted-text: #6b7280;
+  --border-color: #e5e7eb;
+  --hover-bg: #f3f4f6;
+  --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --accent-color: #2563eb;
+  --accent-strong: #1d4ed8;
+  --danger-bg: #fee2e2;
+  --success-bg: #ecfdf5;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --app-bg: #050816;
+  --header-bg: #0f172a;
+  --nav-bg: #0f172a;
+  --surface-bg: #111827;
+  --surface-alt-bg: #1f2937;
+  --panel-bg: #0f172a;
+  --input-bg: #152336;
+  --input-border: #334155;
+  --input-text: #f8fafc;
+  --placeholder-text: #94a3b8;
+  --app-text: #f8fafc;
+  --muted-text: #94a3b8;
+  --border-color: #334155;
+  --hover-bg: #1e293b;
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --accent-color: #60a5fa;
+  --accent-strong: #38bdf8;
+  --danger-bg: #7f1d1d;
+  --success-bg: #064e3b;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--app-bg);
+  color: var(--app-text);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+input, textarea, select {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--input-text);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--placeholder-text);
+}
+
+html[data-theme='dark'] .top-companies,
+html[data-theme='dark'] .ama-sheet,
+html[data-theme='dark'] .pd-container,
+html[data-theme='dark'] .ph-container,
+html[data-theme='dark'] .all-stock-items,
+html[data-theme='dark'] .stock-card,
+html[data-theme='dark'] .company-card,
+html[data-theme='dark'] .bottom-sheet,
+html[data-theme='dark'] .sell-items-container,
+html[data-theme='dark'] .sell-search-bar,
+html[data-theme='dark'] .InventoryFilters-container,
+html[data-theme='dark'] .qsh-container,
+html[data-theme='dark'] .rsi-container,
+html[data-theme='dark'] .rsi-panel,
+html[data-theme='dark'] .delete-modal,
+html[data-theme='dark'] .stock-modal-content,
+html[data-theme='dark'] .options-menu,
+html[data-theme='dark'] .overlay,
+html[data-theme='dark'] .search input,
+html[data-theme='dark'] .companyinfo,
+html[data-theme='dark'] .company-card,
+html[data-theme='dark'] .companyinfo-left,
+html[data-theme='dark'] .bottom-sheet,
+html[data-theme='dark'] .ama-select,
+html[data-theme='dark'] .ama-input,
+html[data-theme='dark'] .sell-qty-input,
+html[data-theme='dark'] .sell-qty-btn,
+html[data-theme='dark'] .sell-quick-qty-btn,
+html[data-theme='dark'] .stock-modal-content,
+html[data-theme='dark'] .stock-card,
+html[data-theme='dark'] .inventory-header,
+html[data-theme='dark'] .stat-box,
+html[data-theme='dark'] .tc-item,
+html[data-theme='dark'] .pd-card {
+  background: var(--surface-bg) !important;
+  color: var(--app-text) !important;
+  border-color: var(--border-color) !important;
+}
+
+html[data-theme='dark'] .top-companies,
+html[data-theme='dark'] .ama-sheet,
+html[data-theme='dark'] .pd-container,
+html[data-theme='dark'] .ph-container,
+html[data-theme='dark'] .all-stock-items,
+html[data-theme='dark'] .stock-card,
+html[data-theme='dark'] .company-card,
+html[data-theme='dark'] .bottom-sheet,
+html[data-theme='dark'] .sell-items-container,
+html[data-theme='dark'] .sell-search-bar,
+html[data-theme='dark'] .InventoryFilters-container,
+html[data-theme='dark'] .qsh-container,
+html[data-theme='dark'] .rsi-container,
+html[data-theme='dark'] .rsi-panel,
+html[data-theme='dark'] .delete-modal,
+html[data-theme='dark'] .stock-modal-content,
+html[data-theme='dark'] .options-menu,
+html[data-theme='dark'] .overlay,
+html[data-theme='dark'] .search input,
+html[data-theme='dark'] .companyinfo,
+html[data-theme='dark'] .bottom-sheet,
+html[data-theme='dark'] .ama-select,
+html[data-theme='dark'] .ama-input,
+html[data-theme='dark'] .sell-qty-input,
+html[data-theme='dark'] .sell-qty-btn,
+html[data-theme='dark'] .sell-quick-qty-btn,
+html[data-theme='dark'] .inventory-header,
+html[data-theme='dark'] .stat-box {
+  box-shadow: var(--card-shadow) !important;
+}
+
+html[data-theme='dark'] .sell-item-row,
+html[data-theme='dark'] .ph-row,
+html[data-theme='dark'] .rsi-row,
+html[data-theme='dark'] .company-card,
+html[data-theme='dark'] .stock-card,
+html[data-theme='dark'] .tc-item {
+  border-bottom-color: rgba(148, 163, 184, 0.2) !important;
+}
+
+html[data-theme='dark'] .search input,
+html[data-theme='dark'] .company-dropdown,
+html[data-theme='dark'] .bottom-sheet input,
+html[data-theme='dark'] .bottom-sheet select,
+html[data-theme='dark'] .ama-select,
+html[data-theme='dark'] .ama-input,
+html[data-theme='dark'] .sell-qty-input,
+html[data-theme='dark'] .sell-buyer-input,
+html[data-theme='dark'] .companyinfo-left,
+html[data-theme='dark'] .pd-card,
+html[data-theme='dark'] .stock-modal-content,
+html[data-theme='dark'] .options-menu button {
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+}
+
+html[data-theme='dark'] .search input {
+  box-shadow: 10px 10px 30px rgba(0,0,0,0.20);
+}
+
+html[data-theme='dark'] .sell-item-row:hover:not(.disabled),
+html[data-theme='dark'] .ph-row:hover,
+html[data-theme='dark'] .rsi-row:hover,
+html[data-theme='dark'] .stock-card:hover,
+html[data-theme='dark'] .company-card:hover {
+  background: var(--hover-bg) !important;
+}
+
+html[data-theme='dark'] .tc-title,
+html[data-theme='dark'] .pd-title,
+html[data-theme='dark'] .ph-title,
+html[data-theme='dark'] .qsh-title,
+html[data-theme='dark'] .sell-item-name,
+html[data-theme='dark'] .sell-item-price,
+html[data-theme='dark'] .companyinfo-middle h4,
+html[data-theme='dark'] .companyinfo-middle p,
+html[data-theme='dark'] .stock-modal-content h3,
+html[data-theme='dark'] .bottom-sheet h2,
+html[data-theme='dark'] .bottom-sheet label,
+html[data-theme='dark'] .bottom-sheet input,
+html[data-theme='dark'] .bottom-sheet select,
+html[data-theme='dark'] .ama-title,
+html[data-theme='dark'] .ama-label,
+html[data-theme='dark'] .ama-input,
+html[data-theme='dark'] .ama-select {
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] .ph-row,
+html[data-theme='dark'] .sell-item-row,
+html[data-theme='dark'] .rsi-row,
+html[data-theme='dark'] .tc-item,
+html[data-theme='dark'] .stock-card,
+html[data-theme='dark'] .company-card {
+  border-color: var(--border-color) !important;
+}
+
+html[data-theme='dark'] .btn,
+html[data-theme='dark'] .ama-submit,
+html[data-theme='dark'] .submit-btn,
+html[data-theme='dark'] .sell-btn,
+html[data-theme='dark'] .price-mode-btn.active,
+html[data-theme='dark'] .stock-option input:checked + span {
+  box-shadow: none !important;
+}
+
+html[data-theme='dark'] .bottom-sheet,
+html[data-theme='dark'] .ama-sheet,
+html[data-theme='dark'] .stock-modal-content,
+html[data-theme='dark'] .delete-modal {
+  border-color: var(--border-color) !important;
+}

@@ -1,7 +1,7 @@
 .smc-container {
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
   padding: 16px;
 }
 
@@ -15,7 +15,7 @@
 .smc-title {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--app-text);
 }
 
 .smc-legend {
@@ -33,14 +33,14 @@
 
 .smc-legend-label {
   font-size: 0.72rem;
-  color: #888;
+  color: var(--muted-text);
   margin-right: 6px;
 }
 
 .smc-skeleton {
   height: 200px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #2c2c2c 25%, #3a3a3a 50%, #2c2c2c 75%);
   background-size: 200% 100%;
   animation: smc-shimmer 1.2s infinite;
 }
@@ -55,21 +55,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #bbb;
+  color: var(--muted-text);
   font-size: 0.875rem;
 }
 
 .smc-tooltip {
-  background: #fff;
-  border: 1px solid #f0f0f0;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 8px 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .smc-tooltip-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #333;
+  color: var(--app-text);
   margin: 0 0 4px 0;
 }

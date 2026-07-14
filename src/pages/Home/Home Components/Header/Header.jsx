@@ -1,12 +1,13 @@
 import React from 'react';
-import { FiBell } from "react-icons/fi";
+import { FiBell, FiMoon, FiSun } from 'react-icons/fi';
+import { useAppTheme } from '../../../../context/AppContext';
 import './Header.css';
 
 export default function Header() {
+  const { theme, toggleTheme } = useAppTheme();
+
   return (
     <div className="header">
-
-      {/* Left Section */}
       <div className="left">
         <img src="/jnt logo.png" alt="logo" />
 
@@ -16,13 +17,15 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Right Section */}
-      <div className="notification">
-        <FiBell className="bell-icon" />
-        <span className="dot"></span>
+      <div className="header-actions">
+        <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+          {theme === 'dark' ? <FiSun size={18} /> : <FiMoon size={18} />}
+        </button>
+        <div className="notification">
+          <FiBell className="bell-icon" />
+          <span className="dot"></span>
+        </div>
       </div>
-
-
     </div>
   );
 }
