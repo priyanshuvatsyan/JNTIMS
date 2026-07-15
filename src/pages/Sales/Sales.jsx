@@ -11,6 +11,20 @@ export default function Sales() {
     const location = useLocation();
   const preselectStock = location.state?.preselectStock || null;
   const [stats, setStats] = useState({ todaysSales: 0, unitsSold: 0, transactions: 0 });
+  const [sellRefreshKey, setSellRefreshKey] = useState(0);
+const [recentRefreshKey, setRecentRefreshKey] = useState(0);
+
+const handleSaleComplete = () => {
+  fetchStats();
+  setRecentRefreshKey(k => k + 1); // 👈 refetch recent sales
+};
+
+const handleSaleRestored = () => {
+  fetchStats();
+  setSellRefreshKey(k => k + 1);   // 👈 refetch sell items list
+};
+
+
 
   const fetchStats = async () => {
     try {
@@ -33,11 +47,15 @@ export default function Sales() {
           unitsSold={stats.unitsSold}
           transactions={stats.transactions}
         />
-        <SellItems onSaleComplete={fetchStats} 
-        preselectStock={preselectStock}
-        /> 
-     
-        <RecentSoldItems />
+        <SellItems
+  onSaleComplete={handleSaleComplete}
+  preselectStock={preselectStock}
+  refreshKey={sellRefreshKey}
+/>
+<RecentSoldItems
+  refreshKey={recentRefreshKey}
+  onSaleRestored={handleSaleRestored}
+/>
       
     </div>
   );

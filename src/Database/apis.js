@@ -3,7 +3,7 @@
  * This module provides CRUD operations for the 'companies' collection in Firestore.
  */
 
-import { collection, addDoc, limit, getDocs, getDoc, Timestamp, writeBatch, deleteDoc, updateDoc, doc, serverTimestamp, query, where, orderBy, startAt, endAt } from "firebase/firestore";
+import { collection, addDoc, limit, getDocs, getDoc, Timestamp, writeBatch, deleteDoc, updateDoc, doc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
 import { db } from "../../firebase.js";
 
 
@@ -472,25 +472,22 @@ export const updateStock = async (stockId, data) => {
 
 //Sales Page
 export async function searchStock(searchTerm) {
-  if (!searchTerm.trim()) {
-    // Return all when empty — but add limit in production
-    const snapshot = await getDocs(query(stockDataCollection, orderBy('productName')));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  }
-
-  // Firestore startsWith trick
-  const term = searchTerm.trim();
-  const end = term.slice(0, -1) + String.fromCharCode(term.charCodeAt(term.length - 1) + 1);
-
   const q = query(
     stockDataCollection,
-    orderBy('productName'),
-    startAt(term),
-    endAt(end)
+    where('remainingQty', '>', 0),
+    orderBy('remainingQty', 'desc')
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const allInStock = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  if (!searchTerm.trim()) return allInStock;
+
+  // Filter by search term client-side
+  const term = searchTerm.trim().toLowerCase();
+return allInStock.filter(item =>
+  item.productName?.toLowerCase().includes(term)  
+);
 }
 
 
@@ -606,6 +603,33 @@ export async function getRecentSales(limitCount = 30) {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
+export async function restoreSale(saleId) {
+  if (!saleId) throw new Error('Sale ID is required');
+
+  const saleRef = doc(db, 'sales', saleId);
+  const saleSnap = await getDoc(saleRef);
+
+  if (!saleSnap.exists()) throw new Error('Sale not found');
+
+  const sale = saleSnap.data();
+
+  const stockRef = doc(db, 'stockData', sale.stockId);
+  const stockSnap = await getDoc(stockRef);
+
+  if (!stockSnap.exists()) throw new Error('Stock item no longer exists');
+
+  const batch = writeBatch(db);
+
+  // Add units back to stock
+  batch.update(stockRef, {
+    remainingQty: stockSnap.data().remainingQty + sale.quantitySold,
+  });
+
+  // Delete the sale record
+  batch.delete(saleRef);
+
+  await batch.commit();
+}
 
 //get sales status for sales page header
 export async function getTodaysSalesStats() {

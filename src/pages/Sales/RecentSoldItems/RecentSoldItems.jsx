@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getRecentSales } from '../../../Database/apis';
-import { FiClock, FiTrendingUp, FiChevronUp } from 'react-icons/fi';
+import { getRecentSales, restoreSale } from '../../../Database/apis';
+import { FiClock, FiTrendingUp, FiChevronUp, FiRotateCcw } from 'react-icons/fi';
 import './RecentSoldItems.css';
 
 const capitalizeWords = (str = '') =>
@@ -12,31 +12,28 @@ function getTimeLabel(timestamp) {
   const now = new Date();
   const diffMs = now - date;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
   return `${diffDays}d ago`;
 }
 
-export default function RecentSoldItems() {
+export default function RecentSoldItems({ refreshKey, onSaleRestored }) {
   const [expanded, setExpanded] = useState(false);
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fetched, setFetched] = useState(false);
+  const [restoringId, setRestoringId] = useState(null);
 
-  // Only fetch when expanded for first time
   useEffect(() => {
-    if (expanded && !fetched) {
+    if (expanded) {
       fetchSales();
     }
-  }, [expanded, fetched]);
+  }, [expanded, refreshKey]); // refetches when expanded OR refreshKey changes
 
   const fetchSales = async () => {
     setLoading(true);
     try {
       const data = await getRecentSales(30);
       setSales(data);
-      setFetched(true);
     } catch (err) {
       console.error('Failed to fetch recent sales:', err);
     } finally {
@@ -44,22 +41,29 @@ export default function RecentSoldItems() {
     }
   };
 
+  const handleRestore = async (saleId) => {
+    setRestoringId(saleId);
+    try {
+      await restoreSale(saleId);
+      setSales(prev => prev.filter(s => s.id !== saleId));
+      if (onSaleRestored) onSaleRestored();
+    } catch (err) {
+      console.error('Failed to restore sale:', err);
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   return (
     <div className={`rsi-container ${expanded ? 'expanded' : ''}`}>
-
-      {/* Trigger bar — always visible */}
       <div className="rsi-trigger" onClick={() => setExpanded(!expanded)}>
         <div className="rsi-trigger-left">
           <FiClock size={15} className="rsi-clock-icon" />
           <span>Recent Sales</span>
         </div>
-        <FiChevronUp
-          size={16}
-          className={`rsi-chevron ${expanded ? 'up' : 'down'}`}
-        />
+        <FiChevronUp size={16} className={`rsi-chevron ${expanded ? 'up' : 'down'}`} />
       </div>
 
-      {/* Expanded panel */}
       {expanded && (
         <div className="rsi-panel">
           {loading ? (
@@ -74,9 +78,7 @@ export default function RecentSoldItems() {
                     <FiTrendingUp size={14} />
                   </div>
                   <div className="rsi-info">
-                    <span className="rsi-name">
-                      {capitalizeWords(sale.productName)}
-                    </span>
+                    <span className="rsi-name">{capitalizeWords(sale.productName)}</span>
                     <span className="rsi-meta">
                       {sale.quantitySold} unit{sale.quantitySold > 1 ? 's' : ''}
                       {sale.customerName ? ` · ${sale.customerName}` : ''}
@@ -87,9 +89,15 @@ export default function RecentSoldItems() {
                   <span className="rsi-revenue">
                     +₹{Number(sale.totalRevenue).toLocaleString('en-IN')}
                   </span>
-                  <span className="rsi-time">
-                    {getTimeLabel(sale.timestamp)}
-                  </span>
+                  <span className="rsi-time">{getTimeLabel(sale.timestamp)}</span>
+                  <button
+                    className="rsi-restore-btn"
+                    onClick={() => handleRestore(sale.id)}
+                    disabled={restoringId === sale.id}
+                    title="Restore sale"
+                  >
+                    <FiRotateCcw size={12} />
+                  </button>
                 </div>
               </div>
             ))

@@ -15,26 +15,30 @@ const capitalizeWords = (str) =>
 
 const QUICK_QTYS = [1, 5, 10, 25];
 
-export default function SellItems({ onSaleComplete, preselectStock  }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [customerName, setCustomerName] = useState('');
-  const [selling, setSelling] = useState(false);
-  const [sellMessage, setSellMessage] = useState('');
+export default function SellItems({ onSaleComplete, preselectStock, refreshKey }) {
+  const [searchTerm, setSearchTerm]       = useState('');
+  const [items, setItems]                 = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [selectedItem, setSelectedItem]   = useState(null);
+  const [quantity, setQuantity]           = useState(1);
+  const [quantityInput, setQuantityInput] = useState('1');
+  const [customerName, setCustomerName]   = useState('');
+  const [selling, setSelling]             = useState(false);
+  const [sellMessage, setSellMessage]     = useState('');
+  const [subtotalEditing, setSubtotalEditing] = useState(false);
+  const [subtotalInput, setSubtotalInput]     = useState('');
   const debounceRef = useRef(null);
 
-//handle preselectStock from inventory page if provided  
-useEffect(() => {
+  // Handle preselectStock from inventory page
+  useEffect(() => {
     if (preselectStock) {
-      setItems([preselectStock]); // show it in list
-      handleSelectItem(preselectStock); // auto-expand it
+      setItems([preselectStock]);
+      handleSelectItem(preselectStock);
       setLoading(false);
     }
   }, [preselectStock]);
 
+  // Search with debounce — refetch on refreshKey too
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -49,26 +53,35 @@ useEffect(() => {
       }
     }, 350);
     return () => clearTimeout(debounceRef.current);
-  }, [searchTerm]);
+  }, [searchTerm, refreshKey]);
 
   const handleSelectItem = (item) => {
     if (getStockStatus(item) === 'out') return;
     setSelectedItem(item);
     setQuantity(1);
+    setQuantityInput('1');
     setCustomerName('');
     setSellMessage('');
+    setSubtotalEditing(false);
+    setSubtotalInput('');
   };
 
   const handleClose = () => {
     setSelectedItem(null);
     setQuantity(1);
+    setQuantityInput('1');
     setCustomerName('');
     setSellMessage('');
+    setSubtotalEditing(false);
+    setSubtotalInput('');
   };
 
   const handleQtyChange = (val) => {
-    const num = Math.max(1, Math.min(Number(val), selectedItem?.remainingQty || 1));
-    setQuantity(num);
+    setQuantityInput(String(val));
+    const num = Number(val);
+    if (!isNaN(num) && num >= 1 && num <= (selectedItem?.remainingQty || 1)) {
+      setQuantity(num);
+    }
   };
 
   const handleSell = async () => {
@@ -82,7 +95,6 @@ useEffect(() => {
         customerName,
       });
       setSellMessage('success');
-      // Update local item qty so list reflects immediately
       setItems(prev =>
         prev.map(i =>
           i.id === selectedItem.id
@@ -98,10 +110,6 @@ useEffect(() => {
       if (onSaleComplete) onSaleComplete();
     }
   };
-
-  const subtotal = selectedItem
-    ? (selectedItem.sellingPrice * quantity).toLocaleString('en-IN')
-    : '0';
 
   return (
     <div className="sell-items-container">
@@ -126,7 +134,7 @@ useEffect(() => {
           <div className="sell-state-msg">No items found</div>
         ) : (
           items.map((item) => {
-            const status = getStockStatus(item.remainingQty);
+            const status = getStockStatus(item);
             const isOut = status === 'out';
             const isSelected = selectedItem?.id === item.id;
 
@@ -162,7 +170,10 @@ useEffect(() => {
                     </span>
                   </div>
                   {isSelected && (
-                    <button className="sell-close-btn" onClick={(e) => { e.stopPropagation(); handleClose(); }}>
+                    <button
+                      className="sell-close-btn"
+                      onClick={(e) => { e.stopPropagation(); handleClose(); }}
+                    >
                       <FiX size={16} />
                     </button>
                   )}
@@ -175,7 +186,9 @@ useEffect(() => {
                     {/* Product meta */}
                     <div className="sell-panel-meta">
                       <span className="sell-panel-units">{item.remainingQty} units</span>
-                      <span className="sell-panel-each">₹{Number(item.sellingPrice).toLocaleString('en-IN')} each</span>
+                      <span className="sell-panel-each">
+                        ₹{Number(item.sellingPrice).toLocaleString('en-IN')} each
+                      </span>
                     </div>
 
                     {/* Quantity */}
@@ -191,10 +204,16 @@ useEffect(() => {
                       <input
                         className="sell-qty-input"
                         type="number"
-                        value={quantity}
+                        value={quantityInput}
                         min={1}
                         max={item.remainingQty}
                         onChange={(e) => handleQtyChange(e.target.value)}
+                        onBlur={() => {
+                          if (!quantity || quantity < 1) {
+                            setQuantity(1);
+                            setQuantityInput('1');
+                          }
+                        }}
                       />
                       <button
                         className="sell-qty-btn"
@@ -235,9 +254,42 @@ useEffect(() => {
                         <span className="sell-subtotal-calc">
                           {quantity} × ₹{Number(item.sellingPrice).toLocaleString('en-IN')}
                         </span>
-                        <strong className="sell-subtotal-total">₹{subtotal}</strong>
-                        <span className="sell-subtotal-label">Subtotal</span>
+
+                        {subtotalEditing ? (
+                          <input
+                            className="sell-subtotal-edit-input"
+                            type="number"
+                            value={subtotalInput}
+                            autoFocus
+                            onChange={(e) => {
+                              setSubtotalInput(e.target.value);
+                              const newSubtotal = Number(e.target.value);
+                              if (newSubtotal > 0 && item.sellingPrice > 0) {
+                                const newQty = Math.round(newSubtotal / item.sellingPrice);
+                                const clamped = Math.max(1, Math.min(newQty, item.remainingQty));
+                                setQuantity(clamped);
+                                setQuantityInput(String(clamped));
+                              }
+                            }}
+                            onBlur={() => setSubtotalEditing(false)}
+                          />
+                        ) : (
+                          <strong
+                            className="sell-subtotal-total"
+                            onClick={() => {
+                              setSubtotalEditing(true);
+                              setSubtotalInput(String(item.sellingPrice * quantity));
+                            }}
+                            style={{ cursor: 'pointer', textDecoration: 'underline dotted' }}
+                            title="Tap to edit subtotal"
+                          >
+                            ₹{(item.sellingPrice * quantity).toLocaleString('en-IN')}
+                          </strong>
+                        )}
+
+                        <span className="sell-subtotal-label">Subtotal · tap to edit</span>
                       </div>
+
                       <button
                         className={`sell-btn ${selling ? 'loading' : ''} ${sellMessage === 'success' ? 'success' : ''}`}
                         onClick={handleSell}
