@@ -147,6 +147,21 @@
   color: var(--muted-text);
 }
 
+.rsi-restore-btn {
+  background: none;
+  border: none;
+  color: #ddd;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+  margin-top: 2px;
+}
+
+.rsi-restore-btn:hover { color: #f39c12; }
+.rsi-restore-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ── Mobile ── */
 @media (max-width: 600px) {
   .rsi-trigger {
