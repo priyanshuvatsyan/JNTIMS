@@ -425,6 +425,7 @@ export async function addStock(data) {
 }
 
 // Autocomplete search for product names within a company — used by AddStock UI
+// Autocomplete search for product names within a company — used by AddStock UI
 export async function searchProductsByName(companyId, searchTerm) {
   if (!companyId || !searchTerm?.trim()) {
     console.log('[apis] searchProductsByName skipped:', { companyId, searchTerm });
@@ -1120,3 +1121,5 @@ const stockMovementData = Object.values(stockMovementMap)
     stockMovementData, // [{ month: "2026-01", in: 450, out: 320 }, ...]
   };
 }
+
+
