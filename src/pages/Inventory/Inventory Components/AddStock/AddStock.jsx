@@ -5,7 +5,8 @@ import {
   addStockArrivalDate, 
   getStockArrivalDate_basedOnCompany,
   addStock,
-  updateStock
+  updateStock,
+  searchProductsByName   
 } from '../../../../Database/apis';
 
 import './AddStock.css';
@@ -36,6 +37,10 @@ export default function AddStock({ editStock = null, onEditClose }) {
   const [boxPriceInput, setBoxPriceInput] = useState(''); // raw input from user
   const [priceMode, setPriceMode] = useState('without');  // 'without' | 'with'
   const GST_PERCENTAGE = 5;
+
+  const [productSuggestions, setProductSuggestions] = useState([]);
+const [suppressSuggestions, setSuppressSuggestions] = useState(false);
+const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -68,10 +73,12 @@ export default function AddStock({ editStock = null, onEditClose }) {
       setCompaniesLoading(true);
       const companiesList = await getCompanies();
       setCompanies(companiesList);
+      console.log('[AddStock] fetchCompanies loaded companies:', companiesList.length, { editStock, companyName });
 
       if (!editStock) {
         const lastCompanyId = localStorage.getItem('lastCompanyId');
         const lastStockDateId = localStorage.getItem('lastStockDateId');
+        console.log('[AddStock] fetchCompanies last saved IDs:', { lastCompanyId, lastStockDateId });
         if (lastCompanyId) {
           setCompanyName(lastCompanyId);
           fetchStockDates(lastCompanyId);
@@ -105,12 +112,24 @@ export default function AddStock({ editStock = null, onEditClose }) {
 
   const handleCompanySelect = (e) => {
     const selectedId = e.target.value;
+    console.log('[AddStock] handleCompanySelect selectedId:', selectedId);
     setCompanyName(selectedId);
     setStockDateId('');
     localStorage.setItem('lastCompanyId', selectedId);
     const selectedCompany = companies.find(c => c.id === selectedId);
     if (selectedCompany) fetchStockDates(selectedCompany.id);
   };
+
+  const handleSelectSuggestion = (product) => {
+  setProductName(product.productName);
+  setUnitsPerBox(product.unitsPerBox || '');
+  setSellingPrice(product.sellingPrice || '');
+  setBoxPriceInput(product.boxPriceWithoutGst ? product.boxPriceWithoutGst.toFixed(2) : '');
+  setPriceMode('without');
+  setSelectedExistingProduct(product);
+  setProductSuggestions([]);
+  setSuppressSuggestions(true);
+};
 
   const resetStockForm = () => {
     const lastCompanyId = localStorage.getItem('lastCompanyId');
@@ -135,6 +154,35 @@ export default function AddStock({ editStock = null, onEditClose }) {
     setDateAmount('');
     setMessage('');
   };
+
+  useEffect(() => {
+    console.log('[AddStock] search effect run:', { companyName, productName, suppressSuggestions });
+    if (!companyName || !productName.trim() || suppressSuggestions) {
+      console.log('[AddStock] search effect early exit:', {
+        companyNameFilled: !!companyName,
+        productNameFilled: !!productName.trim(),
+        suppressSuggestions
+      });
+      setProductSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        console.log('[AddStock] calling searchProductsByName with:', { companyName, productName });
+        const results = await searchProductsByName(companyName, productName);
+        console.log('[AddStock] searchProductsByName results:', results);
+        setProductSuggestions(results);
+      } catch (err) {
+        console.error('Product search failed:', err);
+      }
+    }, 300); // debounce so it doesn't fire on every keystroke
+
+    return () => clearTimeout(timer);
+  }, [productName, companyName, suppressSuggestions]);
+
+  useEffect(() => {
+    console.log('[AddStock] productSuggestions updated:', { length: productSuggestions.length, productSuggestions });
+  }, [productSuggestions]);
 
   // UI Calculations (display only)
   const totalUnits = boxes && unitsPerBox ? Number(boxes) * Number(unitsPerBox) : 0;
@@ -329,18 +377,48 @@ export default function AddStock({ editStock = null, onEditClose }) {
             </div>
           </div>
 
-          <div className="form-row full">
-            <div className="form-group">
-              <label>Product Name *</label>
-              <input
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. Laptop"
-                disabled={loading}
-              />
-            </div>
-          </div>
+       <div className="form-row full">
+  <div className="form-group" style={{ position: 'relative' }}>
+    <label>Product Name *</label>
+    <input
+      type="text"
+      value={productName}
+      onChange={(e) => {
+        const nextValue = e.target.value;
+        console.log('[AddStock] productName input changed:', { nextValue, companyName, suppressSuggestions });
+        setProductName(nextValue);
+        setSuppressSuggestions(false);
+        setSelectedExistingProduct(null);
+      }}
+      placeholder="e.g. Laptop"
+      disabled={loading}
+      autoComplete="off"
+    />
+
+    {productSuggestions.length > 0 && (
+      <ul className="product-suggestions">
+        {productSuggestions.map((product) => (
+          <li
+            key={product.id}
+            className="suggestion-item"
+            onMouseDown={() => handleSelectSuggestion(product)} // mousedown fires before input blur
+          >
+            <span className="suggestion-name">{product.productName}</span>
+            <span className="suggestion-meta">{product.remainingQty} units in stock</span>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {selectedExistingProduct && (
+      <div className="existing-product-banner">
+        Already in stock: <strong>{selectedExistingProduct.boxes}</strong> boxes
+        (<strong>{selectedExistingProduct.remainingQty}</strong> units remaining).
+        Adding this stock will combine it into one running total.
+      </div>
+    )}
+  </div>
+</div>
 
           <div className="form-row">
             <div className="form-group">

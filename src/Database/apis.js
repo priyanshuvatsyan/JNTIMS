@@ -263,6 +263,43 @@ export async function deleteStockArrivalDate(entryId) {
 
 
 const stockDataCollection = collection(db, "stockData");
+const stockDataHistoryCollection = collection(db, "stockDataHistory");
+
+// Archives the outgoing "live" state of a product before it gets overwritten,
+// keeping only the last 2 archived snapshots per product per company.
+async function archiveProductSnapshot(companyId, productName, snapshot) {
+  await addDoc(stockDataHistoryCollection, {
+    companyId,
+    productName,
+    entryId: snapshot.entryId,
+    arrivalDate: snapshot.arrivalDate,
+    boxes: snapshot.boxes,
+    unitsPerBox: snapshot.unitsPerBox,
+    totalUnits: snapshot.totalUnits,
+    remainingQtyAtArchive: snapshot.remainingQty,
+    unitPriceWithGst: snapshot.unitPriceWithGst,
+    unitPriceWithoutGst: snapshot.unitPriceWithoutGst,
+    boxPriceWithGst: snapshot.boxPriceWithGst,
+    boxPriceWithoutGst: snapshot.boxPriceWithoutGst,
+    sellingPrice: snapshot.sellingPrice,
+    gst: snapshot.gst,
+    archivedAt: serverTimestamp(),
+  });
+
+  const historyQuery = query(
+    stockDataHistoryCollection,
+    where('companyId', '==', companyId),
+    where('productName', '==', productName),
+    orderBy('archivedAt', 'asc')
+  );
+  const historySnap = await getDocs(historyQuery);
+
+  const excess = historySnap.docs.length - 2;
+  if (excess > 0) {
+    const toDelete = historySnap.docs.slice(0, excess); // oldest first, drop the overflow
+    await Promise.all(toDelete.map(d => deleteDoc(d.ref)));
+  }
+}
 
 export async function addStock(data) {
   const {
@@ -272,14 +309,13 @@ export async function addStock(data) {
     boxes,
     unitsPerBox,
     boxPriceWithoutGst,
-    boxPriceWithGst,        // coming from UI
-    unitPriceWithoutGst,    // coming from UI
-    unitPriceWithGst,       // coming from UI
+    boxPriceWithGst,
+    unitPriceWithoutGst,
+    unitPriceWithGst,
     sellingPrice,
     gst
   } = data;
 
-  //storing company name and entry date details for easy querying and data integrity (denormalization) 
   const [companySnap, dateSnap] = await Promise.all([
     getDoc(doc(db, 'companies', companyId)),
     getDoc(doc(db, 'stockArrivalDate', entryId)),
@@ -291,36 +327,25 @@ export async function addStock(data) {
   const companyName = companySnap.data().name;
   const arrivalDate = dateSnap.data().arrivalDate;
 
-  // 🔒 Basic validation
   if (!companyId) throw new Error("Company ID required");
   if (!entryId) throw new Error("Entry ID required");
   if (!productName?.trim()) throw new Error("Product name required");
-
   if (!boxes || boxes <= 0) throw new Error("Boxes must be > 0");
   if (!unitsPerBox || unitsPerBox <= 0) throw new Error("Units per box must be > 0");
   if (!boxPriceWithoutGst || boxPriceWithoutGst <= 0) throw new Error("Invalid box price");
 
-  // 🔢 Convert to numbers
+  const cleanProductName = productName.trim().toLowerCase(); // your UI already sends it lowercased — keeping this here too in case other callers don't
   const boxesNum = Number(boxes);
   const unitsPerBoxNum = Number(unitsPerBox);
   const boxPriceNum = Number(boxPriceWithoutGst);
   const gstNum = Number(gst || 0);
+  const newUnits = boxesNum * unitsPerBoxNum;
 
-  const totalUnits = boxesNum * unitsPerBoxNum;
+  const expectedBoxPriceWithGst = boxPriceNum + (boxPriceNum * gstNum) / 100;
+  const expectedUnitPriceWithoutGst = boxPriceNum / unitsPerBoxNum;
+  const expectedUnitPriceWithGst = expectedBoxPriceWithGst / unitsPerBoxNum;
 
-  // 🧠 Recompute expected values (SOURCE OF TRUTH)
-  const expectedBoxPriceWithGst =
-    boxPriceNum + (boxPriceNum * gstNum) / 100;
-
-  const expectedUnitPriceWithoutGst =
-    boxPriceNum / unitsPerBoxNum;
-
-  const expectedUnitPriceWithGst =
-    expectedBoxPriceWithGst / unitsPerBoxNum;
-
-  // 🔍 Optional validation check (for debugging/logging)
   const isClose = (a, b) => Math.abs(a - b) < 0.01;
-
   if (
     !isClose(boxPriceWithGst, expectedBoxPriceWithGst) ||
     !isClose(unitPriceWithoutGst, expectedUnitPriceWithoutGst) ||
@@ -329,41 +354,116 @@ export async function addStock(data) {
     console.warn("⚠️ UI calculation mismatch — overriding with backend values");
   }
 
-  // ✅ FINAL DATA (always use backend computed values)
+  // 🔎 Look for an existing LIVE doc for this product + company
+  const existingQuery = query(
+    stockDataCollection,
+    where('companyId', '==', companyId),
+    where('productName', '==', cleanProductName)
+  );
+  const existingSnap = await getDocs(existingQuery);
+
+  // ── MERGE PATH: product already exists ──────────────
+  if (!existingSnap.empty) {
+    const existingDoc = existingSnap.docs[0];
+    const existing = existingDoc.data();
+
+    // Archive the outgoing live state before overwriting it
+    await archiveProductSnapshot(companyId, cleanProductName, existing);
+
+    const oldRemaining = existing.remainingQty || 0;
+    const combinedQty = oldRemaining + newUnits;
+
+    // Weighted-average cost so profit calc stays accurate across batches
+    const totalOldValue = oldRemaining * (existing.unitPriceWithGst || 0);
+    const totalNewValue = newUnits * expectedUnitPriceWithGst;
+    const avgUnitPriceWithGst = combinedQty > 0 ? (totalOldValue + totalNewValue) / combinedQty : expectedUnitPriceWithGst;
+    const avgUnitPriceWithoutGst = avgUnitPriceWithGst / (1 + gstNum / 100);
+
+    const updatedFields = {
+      boxes: (existing.boxes || 0) + boxesNum,
+      unitsPerBox: unitsPerBoxNum,
+      totalUnits: (existing.totalUnits || 0) + newUnits,
+      remainingQty: combinedQty,
+      unitPriceWithGst: avgUnitPriceWithGst,
+      unitPriceWithoutGst: avgUnitPriceWithoutGst,
+      boxPriceWithoutGst: boxPriceNum,
+      boxPriceWithGst: expectedBoxPriceWithGst,
+      gst: gstNum,
+      sellingPrice: Number(sellingPrice),
+      entryId,
+      arrivalDate,
+      companyName,
+      lastRestockedAt: serverTimestamp(),
+    };
+
+    await updateDoc(existingDoc.ref, updatedFields);
+    return { id: existingDoc.id, ...existing, ...updatedFields };
+  }
+
+  // ── NEW PRODUCT PATH: no live doc exists yet ─────────
   const newStock = {
     companyId,
     entryId,
-
     companyName,
     arrivalDate,
-
-    productName: productName.trim(),
-
+    productName: cleanProductName,
     boxes: boxesNum,
     unitsPerBox: unitsPerBoxNum,
-    totalUnits,
-
+    totalUnits: newUnits,
     boxPriceWithoutGst: boxPriceNum,
     boxPriceWithGst: expectedBoxPriceWithGst,
-
     unitPriceWithoutGst: expectedUnitPriceWithoutGst,
     unitPriceWithGst: expectedUnitPriceWithGst,
-
     sellingPrice: Number(sellingPrice),
     gst: gstNum,
-
-    remainingQty: totalUnits,
-
+    remainingQty: newUnits,
     createdAt: serverTimestamp()
   };
 
   const docRef = await addDoc(stockDataCollection, newStock);
-
-  return {
-    id: docRef.id,
-    ...newStock
-  };
+  return { id: docRef.id, ...newStock };
 }
+
+// Autocomplete search for product names within a company — used by AddStock UI
+export async function searchProductsByName(companyId, searchTerm) {
+  if (!companyId || !searchTerm?.trim()) {
+    console.log('[apis] searchProductsByName skipped:', { companyId, searchTerm });
+    return [];
+  }
+
+  const term = searchTerm.trim().toLowerCase();
+  console.log('[apis] searchProductsByName query args:', { companyId, term });
+  const q = query(
+    stockDataCollection,
+    where('companyId', '==', companyId),
+    where('productName', '>=', term),
+    where('productName', '<=', term + '\uf8ff'),
+    limit(5)
+  );
+
+  const snapshot = await getDocs(q);
+  const results = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  console.log('[apis] searchProductsByName results count:', results.length, results.map(r => r.productName));
+  return results;
+}
+
+// Fetches the archived restock history (up to 2 previous snapshots) for a product.
+// Used by the Inventory page to show "previous arrivals" for a product.
+export async function getProductHistory(companyId, productName) {
+  if (!companyId || !productName?.trim()) return [];
+
+  const normalizedName = productName.trim().toLowerCase();
+  const q = query(
+    stockDataHistoryCollection,
+    where('companyId', '==', companyId),
+    where('productName', '==', normalizedName),
+    orderBy('archivedAt', 'desc') // most recent first
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
 
 export async function getAllStock() {
   const snapshot = await getDocs(stockDataCollection);
