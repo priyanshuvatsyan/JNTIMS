@@ -6,13 +6,15 @@ import {
   getStockArrivalDate_basedOnCompany,
   addStock,
   updateStock,
-  searchProductsByName   
+  searchProductsByName 
 } from '../../../../Database/apis';
 
 import './AddStock.css';
 
 
 export default function AddStock({ editStock = null, onEditClose }) {
+
+
   const [showOptions, setShowOptions] = useState(false);
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [showDateDialog, setShowDateDialog] = useState(false);
