@@ -688,13 +688,11 @@ export async function makeSale(data) {
   batch.update(stockRef, { remainingQty: newRemainingQty });
 
   await batch.commit();
-  await cleanupOldSales();
 
   return { id: saleRef.id, ...saleData };
 }
 
 export async function getRecentSales(limitCount = 30) {
-  await cleanupOldSales();
   const q = query(
     collection(db, 'sales'),
     orderBy('timestamp', 'desc'),
@@ -734,8 +732,6 @@ export async function restoreSale(saleId) {
 
 //get sales status for sales page header
 export async function getTodaysSalesStats() {
-  await cleanupOldSales();
-
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -1004,8 +1000,6 @@ export async function settleCompanyBalance(companyId) {
 
 //analytics calculations
 export async function getAnalyticsStats(months = 6) {
-  await cleanupOldSales();
-
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
   startDate.setHours(0, 0, 0, 0);
