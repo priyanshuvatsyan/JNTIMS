@@ -1001,8 +1001,9 @@ export async function settleCompanyBalance(companyId) {
 //analytics calculations
 export async function getAnalyticsStats(months = 6) {
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - months);
+  startDate.setDate(1);
   startDate.setHours(0, 0, 0, 0);
+  startDate.setMonth(startDate.getMonth() - months + 1);
 
   // Fetch all three in parallel
   const [salesSnap, stockSnap, companiesSnap] = await Promise.all([
