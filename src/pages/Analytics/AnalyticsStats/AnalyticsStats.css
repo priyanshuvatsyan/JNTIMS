@@ -14,9 +14,36 @@
   gap: 4px;
 }
 
+/* Disable tap highlight on mobile / webkit to avoid yellow flash on click */
+.as-card,
+.as-skeleton {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Prevent focus/active outlines from creating colored border on click */
+.as-card:focus,
+.as-card:active,
+.as-card:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--border-color) !important;
+}
+
+.as-card svg * {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.as-card svg :focus,
+.as-card svg :active,
+.as-card svg :focus-within {
+  stroke: none !important;
+  stroke-width: 0 !important;
+}
+
 .as-skeleton {
   height: 110px;
-  background: linear-gradient(90deg, #2c2c2c 25%, #3a3a3a 50%, #2c2c2c 75%);
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
   background-size: 200% 100%;
   animation: as-shimmer 1.2s infinite;
 }

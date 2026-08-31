@@ -12,7 +12,7 @@ import {
 import './AddStock.css';
 
 
-export default function AddStock({ editStock = null, onEditClose }) {
+export default function AddStock({ editStock = null, onEditClose, hideFab = false }) {
 
 
   const [showOptions, setShowOptions] = useState(false);
@@ -297,11 +297,13 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
 
   return (
     <>
-      <div className="addcompany-container">
-        <div className={`btn ${showOptions ? 'open' : ''}`} onClick={() => setShowOptions(!showOptions)}>
-          <FiPlus size={24} />
+      {!hideFab && (
+        <div className="addcompany-container">
+          <div className={`btn ${showOptions ? 'open' : ''}`} onClick={() => setShowOptions(!showOptions)}>
+            <FiPlus size={24} />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={`options-menu ${showOptions ? 'open' : ''}`}>
         <button className="option-btn" onClick={() => { setShowOptions(false); setShowDateDialog(true); }}>

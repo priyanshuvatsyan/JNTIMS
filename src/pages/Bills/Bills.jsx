@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import BillsHeader from './BillsHeader/BillsHeader';
 import PaymentDues from './PaymentDues/PaymentDues';
 import RecordPayment from './RecordPayment/RecordPayment';
@@ -13,6 +14,8 @@ export default function Bills() {
   const [showPayment, setShowPayment] = useState(false);
    const [showManual, setShowManual] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null); 
+  const location = useLocation();
+  const navigate = useNavigate();
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   const fetchBalances = async () => {
@@ -28,6 +31,17 @@ export default function Bills() {
   };
 
   useEffect(() => { fetchBalances(); }, []);
+
+  // If navigated here with a company to open payment for, handle it
+  useEffect(() => {
+    if (location?.state?.openPaymentFor) {
+      const sc = location.state.openPaymentFor;
+      setSelectedCompany({ companyId: sc.companyId, companyName: sc.companyName });
+      setShowPayment(true);
+      // Clear location state so it doesn't reopen on back/refresh
+      try { navigate(location.pathname, { replace: true, state: null }); } catch (e) { /* ignore */ }
+    }
+  }, [location, navigate]);
 
   const totalPayable = balances.reduce((sum, b) => sum + b.totalDue, 0);
   const companiesCount = balances.length;

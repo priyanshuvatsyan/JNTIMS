@@ -17,6 +17,7 @@ export default function Inventory() {
   const [stocksLoading, setStocksLoading] = useState(true);
   const [stocksError, setStocksError] = useState(null);
   const [editStock, setEditStock] = useState(null);
+  const [arrivalDatesOpen, setArrivalDatesOpen] = useState(false);
 
   const totalUnits = stocks.reduce((sum, stock) => sum + (stock.remainingQty || 0), 0);
   const inventoryValue = stocks.reduce((sum, stock) => sum + ((stock.remainingQty || 0) * (stock.sellingPrice || 0)), 0);
@@ -90,6 +91,7 @@ export default function Inventory() {
         onCompanyChange={handleCompanyChange}
         onStockDateChange={setSelectedStockDate}
         onStockStatusChange={setStockStatus}
+        onDatesModalChange={setArrivalDatesOpen}
       />
 
       <AllStockItems
@@ -106,6 +108,7 @@ export default function Inventory() {
           setEditStock(null);
           refetchStocks(); // refresh list after edit
         }}
+        hideFab={arrivalDatesOpen}
       />
     </div>
   );

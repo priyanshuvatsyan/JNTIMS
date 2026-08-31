@@ -17,6 +17,9 @@
   --card-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
   --accent-color: #2563eb;
   --accent-strong: #1d4ed8;
+  --skeleton-base: #f0f0f0;
+  --skeleton-highlight: #e6e6e6;
+  --chart-cursor: rgba(0,0,0,0.04);
   --danger-bg: #fee2e2;
   --success-bg: #ecfdf5;
 }
@@ -40,6 +43,9 @@
   --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   --accent-color: #60a5fa;
   --accent-strong: #38bdf8;
+  --skeleton-base: #2c2c2c;
+  --skeleton-highlight: #3a3a3a;
+  --chart-cursor: rgba(255,255,255,0.06);
   --danger-bg: #7f1d1d;
   --success-bg: #064e3b;
 }
@@ -219,4 +225,17 @@ html[data-theme='dark'] .ama-sheet,
 html[data-theme='dark'] .stock-modal-content,
 html[data-theme='dark'] .delete-modal {
   border-color: var(--border-color) !important;
+}
+
+/* Hide native scrollbars globally but keep pages scrollable */
+html, body, #root {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* WebKit browsers */
+html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getRecentSales, restoreSale } from '../../../Database/apis';
+import { getRecentSales, restoreSale, getSaleDates } from '../../../Database/apis';
 import { FiClock, FiTrendingUp, FiChevronUp, FiRotateCcw } from 'react-icons/fi';
 import './RecentSoldItems.css';
 
@@ -22,6 +22,12 @@ export default function RecentSoldItems({ refreshKey, onSaleRestored }) {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [restoringId, setRestoringId] = useState(null);
+  const [filterType, setFilterType] = useState('latest'); // 'latest' | 'date' | 'range'
+  const [date, setDate] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [limit, setLimit] = useState(30);
+  const [saleDates, setSaleDates] = useState([]);
 
   useEffect(() => {
     if (expanded) {
@@ -29,10 +35,39 @@ export default function RecentSoldItems({ refreshKey, onSaleRestored }) {
     }
   }, [expanded, refreshKey]); // refetches when expanded OR refreshKey changes
 
+  useEffect(() => {
+    if (expanded) fetchSaleDates();
+  }, [expanded]);
+
+  const fetchSaleDates = async () => {
+    try {
+      const dates = await getSaleDates();
+      // latest first
+      setSaleDates(dates.reverse());
+    } catch (err) {
+      console.error('Failed to fetch sale dates:', err);
+    }
+  };
+
+  const formatDisplay = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  };
+
   const fetchSales = async () => {
     setLoading(true);
     try {
-      const data = await getRecentSales(30);
+      const filters = {};
+      if (filterType === 'date' && date) filters.date = date;
+      if (filterType === 'range') {
+        if (startDate) filters.startDate = startDate;
+        if (endDate) filters.endDate = endDate;
+      }
+      const data = await getRecentSales(limit, filters);
       setSales(data);
     } catch (err) {
       console.error('Failed to fetch recent sales:', err);
@@ -66,6 +101,61 @@ export default function RecentSoldItems({ refreshKey, onSaleRestored }) {
 
       {expanded && (
         <div className="rsi-panel">
+            <div className="rsi-filters">
+              <div className="rsi-filter-row">
+                <label>
+                  <input type="radio" name="rsi-filter" value="latest" checked={filterType==='latest'} onChange={()=>setFilterType('latest')} /> Latest
+                </label>
+                <label>
+                  <input type="radio" name="rsi-filter" value="date" checked={filterType==='date'} onChange={()=>setFilterType('date')} /> By Date
+                </label>
+                <label>
+                  <input type="radio" name="rsi-filter" value="range" checked={filterType==='range'} onChange={()=>setFilterType('range')} /> Date Range
+                </label>
+              </div>
+
+              {filterType === 'date' && (
+                <div className="rsi-filter-row">
+                  <select value={date} onChange={e=>setDate(e.target.value)}>
+                    <option value="">Select date</option>
+                    {saleDates.map(d => (
+                      <option key={d} value={d}>{formatDisplay(d)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {filterType === 'range' && (
+                <div className="rsi-filter-row">
+                  <select value={startDate} onChange={e=>setStartDate(e.target.value)}>
+                    <option value="">Start</option>
+                    {saleDates.map(d => (
+                      <option key={d} value={d}>{formatDisplay(d)}</option>
+                    ))}
+                  </select>
+                  <span className="rsi-range-sep">to</span>
+                  <select value={endDate} onChange={e=>setEndDate(e.target.value)}>
+                    <option value="">End</option>
+                    {saleDates.map(d => (
+                      <option key={d} value={d}>{formatDisplay(d)}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="rsi-filter-row">
+                <label>Limit:</label>
+                <select value={limit} onChange={e=>setLimit(Number(e.target.value))}>
+                  <option value={10}>10</option>
+                  <option value={30}>30</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                </select>
+                <button onClick={fetchSales} className="rsi-apply-btn">Apply</button>
+                <button onClick={() => { setFilterType('latest'); setDate(''); setStartDate(''); setEndDate(''); setLimit(30); fetchSales(); }} className="rsi-clear-btn">Clear</button>
+              </div>
+            </div>
           {loading ? (
             <div className="rsi-state">Loading...</div>
           ) : sales.length === 0 ? (
