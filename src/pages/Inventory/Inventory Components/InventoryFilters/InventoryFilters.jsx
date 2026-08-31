@@ -1,8 +1,10 @@
 import './InventoryFilters.css';
 import React, { useState, useEffect } from 'react';
+import { FiPackage } from 'react-icons/fi';
 import {
   getCompanies,
   getStockArrivalDate_basedOnCompany,
+  getAllStockArrivalDates,
 } from '../../../../Database/apis';
 
 export default function InventoryFilters({
@@ -12,11 +14,15 @@ export default function InventoryFilters({
   onCompanyChange,
   onStockDateChange,
   onStockStatusChange,
+  onDatesModalChange,
 }) {
   const [companies, setCompanies] = useState([]);
   const [stockDates, setStockDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDatesModal, setShowDatesModal] = useState(false);
+  const [allArrivalDates, setAllArrivalDates] = useState([]);
+  const [modalQuery, setModalQuery] = useState('');
 
   useEffect(() => {
     fetchCompanies();
@@ -53,6 +59,34 @@ export default function InventoryFilters({
       setStockDates([]);
     }
   };
+
+  const fetchAllArrivalDates = async () => {
+    try {
+      setLoading(true);
+      const [dates, companies] = await Promise.all([
+        getAllStockArrivalDates(),
+        getCompanies(),
+      ]);
+      const companiesMap = {};
+      companies.forEach(c => { companiesMap[c.id] = c.name; });
+
+      const enriched = dates.map(d => ({
+        ...d,
+        companyName: companiesMap[d.companyId] || 'Unknown',
+        arrivalDateDisplay: d.arrivalDate instanceof Date ? d.arrivalDate.toLocaleDateString() : new Date(d.arrivalDate).toLocaleDateString(),
+      }));
+      setAllArrivalDates(enriched);
+      setShowDatesModal(true);
+    } catch (err) {
+      console.error('Failed to fetch all arrival dates:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof onDatesModalChange === 'function') onDatesModalChange(showDatesModal);
+  }, [showDatesModal, onDatesModalChange]);
 
   return (
     <div className="InventoryFilters-container">
@@ -145,6 +179,61 @@ export default function InventoryFilters({
           </label>
         </div>
       </div>
+      <div className="dates-control">
+        <button className="view-dates-btn primary" onClick={fetchAllArrivalDates} aria-label="View all arrival dates">
+          <FiPackage className="btn-icon" size={16} />
+          <span className="btn-text">View All Arrival Dates</span>
+        </button>
+      </div>
+      {showDatesModal && (
+        <div className="arrival-dates-modal" role="dialog" aria-modal="true">
+          <div className="arrival-dates-panel">
+            <div className="drag-handle" />
+            <div className="arrival-dates-header">
+              <h3>All Arrival Dates</h3>
+              <button className="close-btn" onClick={()=>setShowDatesModal(false)}>×</button>
+            </div>
+            <div className="arrival-dates-list">
+              <div className="arrival-search">
+                <input
+                  type="search"
+                  placeholder="Search company or amount..."
+                  value={modalQuery}
+                  onChange={e=>setModalQuery(e.target.value)}
+                />
+                <div className="arrival-count">{allArrivalDates.length} entries</div>
+              </div>
+
+              {allArrivalDates.filter(ad => {
+                if (!modalQuery) return true;
+                const q = modalQuery.toLowerCase();
+                return (ad.companyName || '').toLowerCase().includes(q) || String(ad.amount).includes(q) || (ad.arrivalDateDisplay||'').toLowerCase().includes(q);
+              }).length === 0 ? (
+                <div className="empty">No arrival entries match.</div>
+              ) : (
+                allArrivalDates.filter(ad => {
+                  if (!modalQuery) return true;
+                  const q = modalQuery.toLowerCase();
+                  return (ad.companyName || '').toLowerCase().includes(q) || String(ad.amount).includes(q) || (ad.arrivalDateDisplay||'').toLowerCase().includes(q);
+                }).map(ad => (
+                  <button key={ad.id} className="arrival-row" onClick={() => { onStockDateChange(ad.id); setShowDatesModal(false); }}>
+                    <div className="arrival-left">
+                      <div className="arrival-date">{ad.arrivalDateDisplay}</div>
+                      <div className="arrival-company">{ad.companyName}</div>
+                    </div>
+                    <div className="arrival-right">
+                      {ad.isPaid !== undefined && (
+                        <div className={`arrival-status ${ad.isPaid ? 'paid' : 'pending'}`}>{ad.isPaid ? 'Received' : 'Pending'}</div>
+                      )}
+                      <div className="arrival-amount">₹{Number(ad.amount).toLocaleString('en-IN')}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

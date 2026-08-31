@@ -5,6 +5,39 @@
   padding: 16px;
 }
 
+/* Remove tap highlight / click flash on mobile/webkit */
+.rc-container,
+.rc-skeleton,
+.rc-empty {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Ensure no unexpected focus/active outline around chart */
+.rc-container:focus,
+.rc-container:active,
+.rc-container:focus-within,
+.rc-container svg:focus,
+.rc-container svg:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Force all SVG elements inside to not show strokes/outlines when interacted with */
+.rc-container svg * {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Clear any stroke applied on focus/active */
+.rc-container svg :focus,
+.rc-container svg :active,
+.rc-container svg :focus-within {
+  stroke: none !important;
+  stroke-width: 0 !important;
+}
+
 .rc-header {
   display: flex;
   align-items: center;
@@ -40,7 +73,7 @@
 .rc-skeleton {
   height: 220px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #2c2c2c 25%, #3a3a3a 50%, #2c2c2c 75%);
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
   background-size: 200% 100%;
   animation: rc-shimmer 1.2s infinite;
 }

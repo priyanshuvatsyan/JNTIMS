@@ -5,6 +5,35 @@
   padding: 16px;
 }
 
+/* Remove tap highlight / click flash on mobile/webkit */
+.smc-container,
+.smc-skeleton,
+.smc-empty {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Ensure chart container doesn't show focus/active outline */
+.smc-container:focus,
+.smc-container:active,
+.smc-container:focus-within,
+.smc-container svg:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--border-color) !important;
+}
+
+.smc-container svg * {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.smc-container svg :focus,
+.smc-container svg :active,
+.smc-container svg :focus-within {
+  stroke: none !important;
+  stroke-width: 0 !important;
+}
+
 .smc-header {
   display: flex;
   align-items: center;
@@ -40,7 +69,7 @@
 .smc-skeleton {
   height: 200px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #2c2c2c 25%, #3a3a3a 50%, #2c2c2c 75%);
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 50%, var(--skeleton-base) 75%);
   background-size: 200% 100%;
   animation: smc-shimmer 1.2s infinite;
 }

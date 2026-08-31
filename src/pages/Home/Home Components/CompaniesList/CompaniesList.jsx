@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaBuilding } from "react-icons/fa";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import './CompaniesList.css';
 import { getCompanies, deleteCompany, deleteCompanyData, getOutstandingBalances } from '../../../../Database/apis';
 
 export default function CompaniesList({ searchTerm, refreshKey }) {
+    const navigate = useNavigate();
     const [openId, setOpenId] = useState(null);
     const [deleteCompanyId, setDeleteCompanyId] = useState(null);
     const [deleteDataCompanyId, setDeleteDataCompanyId] = useState(null);
@@ -189,7 +191,7 @@ export default function CompaniesList({ searchTerm, refreshKey }) {
                                     </h3>
                                 </div>
 
-                                <div className="paymentinfo-right">
+                                <div className="paymentinfo-right" onClick={() => navigate('/bills', { state: { openPaymentFor: { companyId: company.id, companyName: company.name } } })}>
                                     Pay Now
                                 </div>
                             </div>

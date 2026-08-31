@@ -20,7 +20,10 @@
   box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.18);
   max-height: 480px;
   overflow-y: auto;
-  background: var(--surface-bg);
+  overflow-x: hidden; /* prevent horizontal scroll */
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.01));
+  padding: 8px 12px;
+  box-sizing: border-box;
 }
 
 .rsi-trigger {
@@ -116,6 +119,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-width: 260px;
 }
 
 .rsi-name {
@@ -133,7 +137,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 6px;
+  min-width: 120px;
 }
 
 .rsi-revenue {
@@ -162,6 +167,96 @@
 .rsi-restore-btn:hover { color: #f39c12; }
 .rsi-restore-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Filters UI */
+.rsi-filters {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: row; /* place controls on a single horizontal row */
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent);
+  border-radius: 8px;
+  font-size: 0.82rem; /* smaller overall filter text */
+  max-width: 720px; /* narrower container */
+  margin: 0 12px; /* left-align with page content */
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.rsi-filter-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: flex-start; /* keep controls grouped, not stretched */
+}
+
+.rsi-filter-row input[type="date"] {
+  padding: 5px 7px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 6px;
+  background: var(--surface-bg);
+  max-width: 160px;
+  font-size: 0.78rem;
+}
+
+.rsi-filter-row select {
+  padding: 5px 7px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 6px;
+  background: var(--surface-bg);
+  max-width: 110px;
+  font-size: 0.78rem;
+}
+
+.rsi-range-sep {
+  color: var(--muted-text);
+  font-size: 0.78rem;
+}
+
+.rsi-apply-btn,
+.rsi-clear-btn {
+  padding: 5px 8px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.72rem; /* further reduced text size */
+  box-shadow: 0 6px 14px rgba(16,24,40,0.04);
+}
+
+.rsi-apply-btn {
+  background: linear-gradient(90deg,#22c55e,#16a34a); /* green gradient */
+  color: white;
+  border-color: rgba(0,0,0,0.04);
+}
+
+.rsi-clear-btn {
+  background: transparent;
+  color: var(--muted-text);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.rsi-apply-btn:hover { transform: translateY(-1px); }
+.rsi-clear-btn:hover { transform: translateY(-1px); }
+
+/* Ensure product name wraps and doesn't push layout */
+.rsi-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  font-size: 0.9rem;
+}
+
+/* Make panel content compact on small screens */
+@media (max-width: 600px) {
+  .rsi-filters { padding: 8px; flex-direction: column; gap: 8px; }
+  .rsi-filter-row input[type="date"], .rsi-filter-row select { max-width: 100%; }
+  .rsi-row-right { min-width: 90px; }
+  .rsi-name { max-width: 140px; }
+}
+
 /* ── Mobile ── */
 @media (max-width: 600px) {
   .rsi-trigger {
@@ -183,4 +278,10 @@
   .rsi-panel {
     max-height: 360px;
   }
+}
+
+/* keep apply/clear close to the limit selector */
+.rsi-filter-row .rsi-apply-btn,
+.rsi-filter-row .rsi-clear-btn {
+  margin-left: 6px;
 }

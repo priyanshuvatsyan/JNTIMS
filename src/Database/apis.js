@@ -593,40 +593,44 @@ return allInStock.filter(item =>
 
 
 //cleanup old sales/payment records (older than 1 month) to keep the database lean
-export async function cleanupOldSales() {
-  const cutoffDate = new Date();
-  cutoffDate.setMonth(cutoffDate.getMonth() - 1);
-  const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
-
+export async function cleanupOldSales(limit = 1000) {
+  // Keep only the latest `limit` sale documents and delete older ones.
+  // This runs on-demand; call it after writes or from a scheduled task.
   const q = query(
     collection(db, 'sales'),
-    where('timestamp', '<=', cutoffTimestamp)
+    orderBy('timestamp', 'desc')
   );
 
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) return 0;
 
-  await Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)));
-  return snapshot.size;
+  if (snapshot.size <= limit) return 0;
+
+  const toDelete = snapshot.docs.slice(limit);
+  await Promise.all(toDelete.map(d => deleteDoc(d.ref)));
+  return toDelete.length;
 }
 
-export async function cleanupOldPayments() {
-  const cutoffDate = new Date();
-  cutoffDate.setMonth(cutoffDate.getMonth() - 1);
-  const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
-
+export async function cleanupOldPayments(limit = 50) {
+  // Keep only the latest `limit` payment documents and delete older ones.
+  // This runs on-demand (called from `makePayment` and `getPaymentHistory`).
   const q = query(
     collection(db, 'payments'),
-    where('createdAt', '<=', cutoffTimestamp)
+    orderBy('createdAt', 'desc')
   );
 
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) return 0;
 
-  await Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)));
-  return snapshot.size;
+  // If we have <= limit items nothing to delete
+  if (snapshot.size <= limit) return 0;
+
+  // Delete documents after the first `limit` (oldest ones)
+  const toDelete = snapshot.docs.slice(limit);
+  await Promise.all(toDelete.map(d => deleteDoc(d.ref)));
+  return toDelete.length;
 }
 
 export async function makeSale(data) {
@@ -689,17 +693,75 @@ export async function makeSale(data) {
 
   await batch.commit();
 
+  // Prune older sales, keep latest 1000 entries
+  try {
+    await cleanupOldSales(1000);
+  } catch (err) {
+    console.warn('cleanupOldSales failed:', err);
+  }
+
   return { id: saleRef.id, ...saleData };
 }
 
-export async function getRecentSales(limitCount = 30) {
-  const q = query(
-    collection(db, 'sales'),
-    orderBy('timestamp', 'desc'),
-    limit(limitCount)
-  );
+export async function getRecentSales(limitCount = 30, filters = {}) {
+  // Supports backward-compatible call: getRecentSales(30)
+  // Filters: { date, startDate, endDate, companyId }
+  const { date, startDate, endDate, companyId } = filters || {};
+
+  const constraints = [];
+
+  // If a single `date` is provided, convert to start/end of that day
+  if (date) {
+    const d = new Date(date);
+    const s = new Date(d);
+    s.setHours(0, 0, 0, 0);
+    const e = new Date(d);
+    e.setHours(23, 59, 59, 999);
+    constraints.push(where('timestamp', '>=', Timestamp.fromDate(s)));
+    constraints.push(where('timestamp', '<=', Timestamp.fromDate(e)));
+  } else {
+    if (startDate) {
+      constraints.push(where('timestamp', '>=', Timestamp.fromDate(new Date(startDate))));
+    }
+    if (endDate) {
+      constraints.push(where('timestamp', '<=', Timestamp.fromDate(new Date(endDate))));
+    }
+  }
+
+  if (companyId) {
+    constraints.push(where('companyId', '==', companyId));
+  }
+
+  // Always order by timestamp desc and limit results
+  constraints.push(orderBy('timestamp', 'desc'));
+  constraints.push(limit(limitCount));
+
+  const q = query(collection(db, 'sales'), ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// Return distinct sale dates (YYYY-MM-DD) matching optional filters.
+export async function getSaleDates(filters = {}) {
+  const { companyId, startDate, endDate } = filters || {};
+
+  const constraints = [];
+  if (companyId) constraints.push(where('companyId', '==', companyId));
+  if (startDate) constraints.push(where('timestamp', '>=', Timestamp.fromDate(new Date(startDate))));
+  if (endDate) constraints.push(where('timestamp', '<=', Timestamp.fromDate(new Date(endDate))));
+  constraints.push(orderBy('timestamp', 'asc'));
+
+  const q = query(collection(db, 'sales'), ...constraints);
+  const snapshot = await getDocs(q);
+
+  const dateSet = new Set();
+  snapshot.forEach(doc => {
+    const ts = doc.data().timestamp?.toDate?.() || new Date();
+    const key = ts.toISOString().slice(0, 10); // YYYY-MM-DD
+    dateSet.add(key);
+  });
+
+  return Array.from(dateSet);
 }
 
 export async function restoreSale(saleId) {

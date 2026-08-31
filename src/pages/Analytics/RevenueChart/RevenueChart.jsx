@@ -70,7 +70,7 @@ export default function RevenueChart({ stats, loading }) {
               tick={{ fontSize: 11, fill: '#aaa' }}
               width={48}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f5f5f5' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--chart-cursor)' }} />
             <Bar dataKey="Revenue" fill="#4c6ef5" radius={[4, 4, 0, 0]} maxBarSize={32} />
             <Bar dataKey="Profit"  fill="#27ae60" radius={[4, 4, 0, 0]} maxBarSize={32} />
           </BarChart>
