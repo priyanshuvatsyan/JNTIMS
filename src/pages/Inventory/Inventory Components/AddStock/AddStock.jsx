@@ -11,9 +11,7 @@ import {
 
 import './AddStock.css';
 
-
 export default function AddStock({ editStock = null, onEditClose, hideFab = false }) {
-
 
   const [showOptions, setShowOptions] = useState(false);
   const [showStockDialog, setShowStockDialog] = useState(false);
@@ -38,11 +36,13 @@ export default function AddStock({ editStock = null, onEditClose, hideFab = fals
   const [sellingPrice, setSellingPrice] = useState('');
   const [boxPriceInput, setBoxPriceInput] = useState(''); // raw input from user
   const [priceMode, setPriceMode] = useState('without');  // 'without' | 'with'
-  const GST_PERCENTAGE = 5;
+  
+  // Replaced hardcoded GST with state (defaulting to 5)
+  const [gstPercentage, setGstPercentage] = useState(5); 
 
   const [productSuggestions, setProductSuggestions] = useState([]);
-const [suppressSuggestions, setSuppressSuggestions] = useState(false);
-const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
+  const [suppressSuggestions, setSuppressSuggestions] = useState(false);
+  const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -63,6 +63,7 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
       setSellingPrice(editStock.sellingPrice || '');
       setBoxPriceInput(editStock.boxPriceWithoutGst || '');
       setPriceMode('without');
+      setGstPercentage(editStock.gst || 5); // Load saved GST
       if (editStock.companyId) {
         fetchStockDates(editStock.companyId);
       }
@@ -123,15 +124,16 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
   };
 
   const handleSelectSuggestion = (product) => {
-  setProductName(product.productName);
-  setUnitsPerBox(product.unitsPerBox || '');
-  setSellingPrice(product.sellingPrice || '');
-  setBoxPriceInput(product.boxPriceWithoutGst ? product.boxPriceWithoutGst.toFixed(2) : '');
-  setPriceMode('without');
-  setSelectedExistingProduct(product);
-  setProductSuggestions([]);
-  setSuppressSuggestions(true);
-};
+    setProductName(product.productName);
+    setUnitsPerBox(product.unitsPerBox || '');
+    setSellingPrice(product.sellingPrice || '');
+    setBoxPriceInput(product.boxPriceWithoutGst ? product.boxPriceWithoutGst.toFixed(2) : '');
+    setPriceMode('without');
+    setGstPercentage(product.gst || 5); // Apply product's previous GST if available
+    setSelectedExistingProduct(product);
+    setProductSuggestions([]);
+    setSuppressSuggestions(true);
+  };
 
   const resetStockForm = () => {
     const lastCompanyId = localStorage.getItem('lastCompanyId');
@@ -147,6 +149,7 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
     setSellingPrice('');
     setBoxPriceInput('');
     setPriceMode('without');
+    setGstPercentage(5); // Reset to default GST
     setMessage('');
   };
 
@@ -191,11 +194,11 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
 
   // Derive boxPriceWithoutGst based on mode
   const boxPriceWithoutGst = priceMode === 'with'
-    ? Number(boxPriceInput) / (1 + GST_PERCENTAGE / 100)
+    ? Number(boxPriceInput) / (1 + gstPercentage / 100)
     : Number(boxPriceInput);
 
   const boxPrice = boxPriceWithoutGst || 0;
-  const boxPriceWithGst = boxPrice * (1 + GST_PERCENTAGE / 100);
+  const boxPriceWithGst = boxPrice * (1 + gstPercentage / 100);
   const perUnitPriceNoGst = Number(unitsPerBox) > 0 ? boxPrice / Number(unitsPerBox) : 0;
   const perUnitPriceWithGst = Number(unitsPerBox) > 0 ? boxPriceWithGst / Number(unitsPerBox) : 0;
 
@@ -261,7 +264,7 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
         unitPriceWithoutGst: perUnitPriceNoGst,
         unitPriceWithGst: perUnitPriceWithGst,
         sellingPrice: Number(sellingPrice),
-        gst: GST_PERCENTAGE,
+        gst: gstPercentage, // Save selected GST
       };
 
       if (editStock) {
@@ -381,48 +384,48 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
             </div>
           </div>
 
-       <div className="form-row full">
-  <div className="form-group" style={{ position: 'relative' }}>
-    <label>Product Name *</label>
-    <input
-      type="text"
-      value={productName}
-      onChange={(e) => {
-        const nextValue = e.target.value;
-        console.log('[AddStock] productName input changed:', { nextValue, companyName, suppressSuggestions });
-        setProductName(nextValue);
-        setSuppressSuggestions(false);
-        setSelectedExistingProduct(null);
-      }}
-      placeholder="e.g. Laptop"
-      disabled={loading}
-      autoComplete="off"
-    />
+          <div className="form-row full">
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label>Product Name *</label>
+              <input
+                type="text"
+                value={productName}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  console.log('[AddStock] productName input changed:', { nextValue, companyName, suppressSuggestions });
+                  setProductName(nextValue);
+                  setSuppressSuggestions(false);
+                  setSelectedExistingProduct(null);
+                }}
+                placeholder="e.g. Laptop"
+                disabled={loading}
+                autoComplete="off"
+              />
 
-    {productSuggestions.length > 0 && (
-      <ul className="product-suggestions">
-        {productSuggestions.map((product) => (
-          <li
-            key={product.id}
-            className="suggestion-item"
-            onMouseDown={() => handleSelectSuggestion(product)} // mousedown fires before input blur
-          >
-            <span className="suggestion-name">{product.productName}</span>
-            <span className="suggestion-meta">{product.remainingQty} units in stock</span>
-          </li>
-        ))}
-      </ul>
-    )}
+              {productSuggestions.length > 0 && (
+                <ul className="product-suggestions">
+                  {productSuggestions.map((product) => (
+                    <li
+                      key={product.id}
+                      className="suggestion-item"
+                      onMouseDown={() => handleSelectSuggestion(product)} // mousedown fires before input blur
+                    >
+                      <span className="suggestion-name">{product.productName}</span>
+                      <span className="suggestion-meta">{product.remainingQty} units in stock</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-    {selectedExistingProduct && (
-      <div className="existing-product-banner">
-        Already in stock: <strong>{selectedExistingProduct.boxes}</strong> boxes
-        (<strong>{selectedExistingProduct.remainingQty}</strong> units remaining).
-        Adding this stock will combine it into one running total.
-      </div>
-    )}
-  </div>
-</div>
+              {selectedExistingProduct && (
+                <div className="existing-product-banner">
+                  Already in stock: <strong>{selectedExistingProduct.boxes}</strong> boxes
+                  (<strong>{selectedExistingProduct.remainingQty}</strong> units remaining).
+                  Adding this stock will combine it into one running total.
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="form-row">
             <div className="form-group">
@@ -466,27 +469,33 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
           </div>
 
           <div className="form-row">
-  <div className="form-group">
-    <label>
-      {priceMode === 'without' ? 'Box Price (without GST) *' : 'Box Price (with GST) *'}
-    </label>
-    <input
-      type="number"
-      value={boxPriceInput}
-      onChange={(e) => setBoxPriceInput(e.target.value)}
-      placeholder="0"
-      disabled={loading}
-    />
-  </div>
+            <div className="form-group">
+              <label>
+                {priceMode === 'without' ? 'Box Price (without GST) *' : 'Box Price (with GST) *'}
+              </label>
+              <input
+                type="number"
+                value={boxPriceInput}
+                onChange={(e) => setBoxPriceInput(e.target.value)}
+                placeholder="0"
+                disabled={loading}
+              />
+            </div>
 
-  {/* Only show GST field when price+GST mode is selected */}
-  {priceMode === 'with' && (
-    <div className="form-group">
-      <label>GST %</label>
-      <input type="text" value={`${GST_PERCENTAGE}%`} disabled />
-    </div>
-  )}
-</div>
+            {/* GST selector is now always visible since it affects calculations in both modes */}
+            <div className="form-group">
+              <label>GST %</label>
+              <select
+                value={gstPercentage}
+                onChange={(e) => setGstPercentage(Number(e.target.value))}
+                disabled={loading}
+              >
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18%</option>
+              </select>
+            </div>
+          </div>
 
           <div className="total-units-box">
             <div className="total-unit-item">
@@ -503,7 +512,7 @@ const [selectedExistingProduct, setSelectedExistingProduct] = useState(null);
             </div>
             <div className="total-unit-item">
               <span>Unit (GST)</span>
-             <strong>₹{Math.round(perUnitPriceWithGst)}</strong>
+              <strong>₹{Math.round(perUnitPriceWithGst)}</strong>
             </div>
           </div>
 
