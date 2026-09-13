@@ -1,0 +1,136 @@
+.login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-width: 100vw;
+  background-color: #f8fafc;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  width: 70px;
+  height: 70px;
+  background-color: #1d4ed8;
+  color: white;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 16px rgba(29, 78, 216, 0.25);
+}
+
+.login-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: 0.5px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.pin-indicators {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  transition: all 0.2s ease-in-out;
+}
+
+.pin-dot.filled {
+  background-color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.pin-dot.error {
+  background-color: #ef4444;
+}
+
+/* Shake animation for wrong PIN */
+.shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.numpad-btn {
+  width: 85px;
+  height: 65px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid #f1f5f9;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.1s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.numpad-btn:active {
+  background: #f8fafc;
+  transform: scale(0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.numpad-btn.empty {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  cursor: default;
+}
+
+.numpad-btn.backspace {
+  background: #f1f5f9;
+  color: #64748b;
+  box-shadow: none;
+  border: none;
+}
+
+/* Responsive adjustments for smaller phones */
+@media (max-width: 380px) {
+  .numpad-btn {
+    width: 75px;
+    height: 60px;
+  }
+}
