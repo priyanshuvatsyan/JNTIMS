@@ -79,26 +79,52 @@ export default function SellItems({ onSaleComplete, preselectStock, refreshKey }
   const handleQtyChange = (val) => {
     setQuantityInput(String(val));
     const num = Number(val);
-    if (!isNaN(num) && num >= 1 && num <= (selectedItem?.remainingQty || 1)) {
-      setQuantity(num);
+    const availableQty = Number(selectedItem?.remainingQty ?? 0);
+
+    if (val === '') {
+      setSellMessage('');
+      return;
     }
+    if (!Number.isInteger(num) || num < 1) {
+      setSellMessage('Enter a whole quantity greater than 0');
+      return;
+    }
+    if (num > availableQty) {
+      setSellMessage(`Only ${availableQty} units available`);
+      return;
+    }
+
+    setQuantity(num);
+    setSellMessage('');
   };
 
   const handleSell = async () => {
     if (!selectedItem) return;
+    const requestedQuantity = Number(quantityInput);
+    const availableQty = Number(selectedItem.remainingQty ?? 0);
+
+    if (!Number.isInteger(requestedQuantity) || requestedQuantity < 1) {
+      setSellMessage('Enter a whole quantity greater than 0');
+      return;
+    }
+    if (requestedQuantity > availableQty) {
+      setSellMessage(`Only ${availableQty} units available`);
+      return;
+    }
+
     setSelling(true);
     setSellMessage('');
     try {
       await makeSale({
         stockId: selectedItem.id,
-        quantitySold: quantity,
+        quantitySold: requestedQuantity,
         customerName,
       });
       setSellMessage('success');
       setItems(prev =>
         prev.map(i =>
           i.id === selectedItem.id
-            ? { ...i, remainingQty: i.remainingQty - quantity }
+            ? { ...i, remainingQty: i.remainingQty - requestedQuantity }
             : i
         )
       );

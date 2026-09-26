@@ -19,9 +19,20 @@
   border: 1px solid var(--border-color);
 }
 
+.rp-sheet.rp-shake {
+  animation: rp-shake 0.4s ease-in-out;
+}
+
 @keyframes rp-slide-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+
+@keyframes rp-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-5px); }
 }
 
 .rp-drag-bar {

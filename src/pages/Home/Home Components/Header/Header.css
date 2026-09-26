@@ -42,6 +42,41 @@
   gap: 10px;
 }
 
+.environment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1px solid #f3c66b;
+  border-radius: 7px;
+  background: #fff8e6;
+  color: #80520a;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.environment-badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: #e69a16;
+  box-shadow: 0 0 0 3px rgba(230, 154, 22, 0.14);
+}
+
+html[data-theme='dark'] .environment-badge {
+  border-color: #805b22;
+  background: #332712;
+  color: #f6d58b;
+}
+
+html[data-theme='dark'] .environment-badge::before {
+  background: #f2b94b;
+  box-shadow: 0 0 0 3px rgba(242, 185, 75, 0.16);
+}
+
 .theme-toggle {
   border: 1px solid var(--border-color);
   background: var(--surface-bg);
@@ -91,4 +126,18 @@
 .logout-btn:hover {
   opacity: 0.7;
   color: #ef4444; /* Optional: adds a slight red tint on hover to indicate logging out */
+}
+
+@media (max-width: 480px) {
+  .environment-badge {
+    gap: 6px;
+    padding: 5px 7px;
+    font-size: 9px;
+  }
+
+  .environment-badge::before {
+    width: 6px;
+    height: 6px;
+    flex-basis: 6px;
+  }
 }

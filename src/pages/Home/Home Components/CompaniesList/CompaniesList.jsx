@@ -16,9 +16,11 @@ export default function CompaniesList({ searchTerm, refreshKey }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [balancesMap, setBalancesMap] = useState({});
+    const [balancesLoading, setBalancesLoading] = useState(true);
 
     useEffect(() => {
         const fetchBalances = async () => {
+            setBalancesLoading(true);
             try {
                 const data = await getOutstandingBalances();
                 const map = data.reduce((acc, b) => {
@@ -28,10 +30,12 @@ export default function CompaniesList({ searchTerm, refreshKey }) {
                 setBalancesMap(map);
             } catch (err) {
                 console.error('Failed to fetch balances:', err);
+            } finally {
+                setBalancesLoading(false);
             }
         };
         fetchBalances();
-    }, []);
+    }, [refreshKey]);
 
 
     useEffect(() => {
@@ -153,6 +157,8 @@ export default function CompaniesList({ searchTerm, refreshKey }) {
             <div className="companies-table">
                 {filteredCompanies.map((company) => {
                     const isOpen = openId === company.id;
+                    const dueAmount = Number(balancesMap[company.id] ?? 0);
+                    const canPay = !balancesLoading && Number.isFinite(dueAmount) && dueAmount > 0;
 
                     return (
                         <div key={company.id} className="company-card">
@@ -191,9 +197,14 @@ export default function CompaniesList({ searchTerm, refreshKey }) {
                                     </h3>
                                 </div>
 
-                                <div className="paymentinfo-right" onClick={() => navigate('/bills', { state: { openPaymentFor: { companyId: company.id, companyName: company.name } } })}>
+                                <button
+                                    type="button"
+                                    className="paymentinfo-right"
+                                    disabled={!canPay}
+                                    onClick={() => navigate('/bills', { state: { openPaymentFor: { companyId: company.id, companyName: company.name } } })}
+                                >
                                     Pay Now
-                                </div>
+                                </button>
                             </div>
 
                             {isOpen && (
