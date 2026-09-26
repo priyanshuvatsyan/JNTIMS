@@ -21,7 +21,7 @@ export default function Header() {
 
         <div className="title">
           <h3>JNTIMS</h3>
-          <p>Inventory Management</p>
+          {/* <p>Inventory Management</p> */}
         </div>
       </div>
 
@@ -38,9 +38,11 @@ export default function Header() {
           <span className="dot"></span>
         </div>
 
+ {!isTestingEnvironment && (
         <button className="logout-btn" onClick={handleLogout} aria-label="Logout" title="Lock App">
           <FiLogOut size={18} />
-        </button>
+        </button> 
+      )}
       </div>
     </div>
   );
