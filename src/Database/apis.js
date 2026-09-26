@@ -3,7 +3,7 @@
  * This module provides CRUD operations for the 'companies' collection in Firestore.
  */
 
-import { collection, addDoc, limit, getDocs, getDoc, Timestamp, writeBatch, deleteDoc, updateDoc, doc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
+import { collection, addDoc, limit, getDocs, getDoc, Timestamp, writeBatch, deleteDoc, updateDoc, doc, serverTimestamp, query, where, orderBy, runTransaction } from "firebase/firestore";
 import { db } from "../../firebase.js";
 
 
@@ -573,22 +573,18 @@ export const updateStock = async (stockId, data) => {
 
 //Sales Page
 export async function searchStock(searchTerm) {
-  const q = query(
-    stockDataCollection,
-    where('remainingQty', '>', 0),
-    orderBy('remainingQty', 'desc')
-  );
+  const q = query(stockDataCollection, orderBy('remainingQty', 'desc'));
 
   const snapshot = await getDocs(q);
-  const allInStock = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const allStock = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  if (!searchTerm.trim()) return allInStock;
+  if (!searchTerm.trim()) return allStock;
 
   // Filter by search term client-side
   const term = searchTerm.trim().toLowerCase();
-return allInStock.filter(item =>
-  item.productName?.toLowerCase().includes(term)  
-);
+  return allStock.filter(item =>
+    item.productName?.toLowerCase().includes(term)
+  );
 }
 
 
@@ -635,63 +631,60 @@ export async function cleanupOldPayments(limit = 50) {
 
 export async function makeSale(data) {
   const { stockId, quantitySold, customerName } = data;
+  const requestedQuantity = Number(quantitySold);
 
   // ─── Validation ───────────────────────────────────────
   if (!stockId) throw new Error("Stock ID is required");
-  if (!quantitySold || quantitySold <= 0) throw new Error("Quantity must be greater than 0");
-
-  // ─── Fetch stock document (source of truth) ───────────
-  const stockRef = doc(db, 'stockData', stockId);
-  const stockSnap = await getDoc(stockRef);
-
-  if (!stockSnap.exists()) throw new Error("Stock item not found");
-
-  const stock = stockSnap.data();
-
-  // ─── Check stock availability ─────────────────────────
-  if (stock.remainingQty < quantitySold) {
-    throw new Error(`Only ${stock.remainingQty} units available`);
+  if (!Number.isInteger(requestedQuantity) || requestedQuantity <= 0) {
+    throw new Error("Quantity must be a whole number greater than 0");
   }
 
-  // ─── Calculate financials ─────────────────────────────
-  const sellingPrice = stock.sellingPrice;
-  const costPrice = stock.unitPriceWithGst; // what you paid per unit
-  const totalRevenue = sellingPrice * quantitySold;
-  const totalCost = costPrice * quantitySold;
-  const totalProfit = totalRevenue - totalCost;
-  const newRemainingQty = stock.remainingQty - quantitySold;
-
-  // ─── Save sale record ─────────────────────────────────
-  const saleData = {
-    stockId,
-    companyId: stock.companyId,
-    entryId: stock.entryId,
-    companyName: stock.companyName,
-    arrivalDate: stock.arrivalDate,
-    productName: stock.productName,
-
-    quantitySold: Number(quantitySold),
-    sellingPrice,
-    costPrice,
-    totalRevenue,
-    totalCost,
-    totalProfit,
-
-    customerName: customerName?.trim() || null,
-    timestamp: serverTimestamp(),
-  };
-
-  // ─── Run both writes together ─────────────────────────
-  const batch = writeBatch(db);
-
-  // 1. Save the sale
+  const stockRef = doc(db, 'stockData', stockId);
   const saleRef = doc(collection(db, 'sales'));
-  batch.set(saleRef, saleData);
+  let saleData;
 
-  // 2. Deduct from stock
-  batch.update(stockRef, { remainingQty: newRemainingQty });
+  await runTransaction(db, async (transaction) => {
+    const stockSnap = await transaction.get(stockRef);
+    if (!stockSnap.exists()) throw new Error("Stock item not found");
 
-  await batch.commit();
+    const stock = stockSnap.data();
+    const availableQty = Number(stock.remainingQty ?? 0);
+
+    if (!Number.isFinite(availableQty) || availableQty < 0) {
+      throw new Error("Stock quantity is invalid");
+    }
+    if (availableQty < requestedQuantity) {
+      throw new Error(`Only ${availableQty} units available`);
+    }
+
+    const sellingPrice = stock.sellingPrice;
+    const costPrice = stock.unitPriceWithGst;
+    const totalRevenue = sellingPrice * requestedQuantity;
+    const totalCost = costPrice * requestedQuantity;
+    const totalProfit = totalRevenue - totalCost;
+
+    saleData = {
+      stockId,
+      companyId: stock.companyId,
+      entryId: stock.entryId,
+      companyName: stock.companyName,
+      arrivalDate: stock.arrivalDate,
+      productName: stock.productName,
+
+      quantitySold: requestedQuantity,
+      sellingPrice,
+      costPrice,
+      totalRevenue,
+      totalCost,
+      totalProfit,
+
+      customerName: customerName?.trim() || null,
+      timestamp: serverTimestamp(),
+    };
+
+    transaction.set(saleRef, saleData);
+    transaction.update(stockRef, { remainingQty: availableQty - requestedQuantity });
+  });
 
   // Prune older sales, keep latest 1000 entries
   try {

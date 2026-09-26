@@ -5,6 +5,7 @@ import './Header.css';
 
 export default function Header() {
   const { theme, toggleTheme } = useAppTheme();
+  const isTestingEnvironment = import.meta.env.TESTING === 'true';
 
   const handleLogout = () => {
     // Clear the authentication state from sessionStorage
@@ -25,6 +26,9 @@ export default function Header() {
       </div>
 
       <div className="header-actions">
+        {isTestingEnvironment && (
+          <span className="environment-badge">Development environment</span>
+        )}
         <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
           {theme === 'dark' ? <FiSun size={18} /> : <FiMoon size={18} />}
         </button>

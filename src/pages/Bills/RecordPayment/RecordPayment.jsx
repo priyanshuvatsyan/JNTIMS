@@ -66,6 +66,10 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
 
   const handleSubmit = async () => {
     if (!isValid) return;
+    if (selectedBalance && amount > selectedBalance.totalDue) {
+      setError(`Payment cannot exceed the total due of ₹${selectedBalance.totalDue.toLocaleString('en-IN')}.`);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -121,7 +125,7 @@ export default function RecordPayment({ balances = [], selectedCompany, onClose,
 
   return (
     <div className="rp-overlay" onClick={onClose}>
-      <div className="rp-sheet" onClick={e => e.stopPropagation()}>
+      <div className={`rp-sheet ${error ? 'rp-shake' : ''}`} onClick={e => e.stopPropagation()}>
         <div className="rp-drag-bar" />
 
         <div className="rp-header">
